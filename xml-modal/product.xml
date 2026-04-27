@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modal name="Product" label="商品" type="table" module="shop">
+  <description>商品管理模块，主要用于展示商品列表及商品信息录入</description>
+
+  <fields>
+    <field name="id" label="ID" type="number" primary="true" hidden="true">
+      <validation required="false" />
+    </field>
+
+    <field name="name" label="商品名称" type="string" tableVisible="true" searchable="true">
+      <validation required="true" minLength="2" maxLength="100" message="商品名称2-100字" />
+    </field>
+
+    <field name="categoryId" label="分类" type="select" tableVisible="true" searchable="true">
+      <remoteOptions api="/api/shop/category" labelKey="name" valueKey="id" />
+      <validation required="true" message="请选择商品分类" />
+    </field>
+
+    <field name="price" label="价格(元)" type="number" tableVisible="true">
+      <validation required="true" min="0" max="9999999" precision="2" message="价格须大于0" />
+    </field>
+
+    <field name="stock" label="库存" type="number" tableVisible="true">
+      <validation required="true" min="0" integer="true" message="库存须为非负整数" />
+    </field>
+
+    <field name="sku" label="SKU编码" type="string" tableVisible="true" searchable="true">
+      <validation required="false" maxLength="64" />
+    </field>
+
+    <field name="images" label="商品图片" type="image-list" tableVisible="false">
+      <validation required="false" maxCount="9" maxSize="5120" accept=".jpg,.jpeg,.png,.webp" />
+    </field>
+
+    <field name="description" label="商品描述" type="richtext" tableVisible="false">
+      <validation required="false" maxLength="5000" />
+    </field>
+
+    <field name="status" label="上架状态" type="select" tableVisible="true">
+      <options>
+        <option value="0" label="下架" />
+        <option value="1" label="上架" />
+      </options>
+      <validation required="true" default="0" />
+    </field>
+
+    <field name="sort" label="排序" type="number" tableVisible="false">
+      <validation required="false" min="0" integer="true" default="0" />
+    </field>
+
+    <field name="createdAt" label="创建时间" type="datetime" tableVisible="true" readonly="true">
+      <validation required="false" />
+    </field>
+  </fields>
+
+  <table pagination="true" pageSize="10" sortable="true" />
+  <form layout="grid" cols="2" labelWidth="120px" />
+
+  <api prefix="/api/shop/product">
+    <endpoint action="list"   method="GET"    path="/"        description="查询列表" />
+    <endpoint action="detail" method="GET"    path="/:id"     description="查询详情" />
+    <endpoint action="create" method="POST"   path="/"        description="新建" />
+    <endpoint action="update" method="PUT"    path="/:id"     description="更新" />
+    <endpoint action="delete" method="DELETE" path="/:id"     description="删除" />
+  </api>
+</modal>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modal name="User" label="用户" type="form" module="system">
+  <description>用户管理模块，包含用户基本信息的表单与表格定义</description>
+
+  <fields>
+    <field name="id" label="ID" type="number" primary="true" hidden="true">
+      <validation required="false" />
+    </field>
+
+    <field name="username" label="用户名" type="string" tableVisible="true" searchable="true">
+      <validation required="true" minLength="3" maxLength="20"
+        pattern="^[a-zA-Z0-9_]+$"
+        message="用户名只能包含字母、数字和下划线，长度3-20位" />
+    </field>
+
+    <field name="nickname" label="昵称" type="string" tableVisible="true">
+      <validation required="false" maxLength="50" />
+    </field>
+
+    <field name="email" label="邮箱" type="email" tableVisible="true" searchable="true">
+      <validation required="true" format="email" message="请输入有效的邮箱地址" />
+    </field>
+
+    <field name="phone" label="手机号" type="string" tableVisible="true">
+      <validation required="false" pattern="^1[3-9]\d{9}$" message="请输入有效的手机号" />
+    </field>
+
+    <field name="password" label="密码" type="password" tableVisible="false">
+      <validation required="true" minLength="8" maxLength="32"
+        message="密码长度8-32位" />
+    </field>
+
+    <field name="gender" label="性别" type="select" tableVisible="true">
+      <options>
+        <option value="0" label="未知" />
+        <option value="1" label="男" />
+        <option value="2" label="女" />
+      </options>
+      <validation required="false" />
+    </field>
+
+    <field name="birthday" label="生日" type="date" tableVisible="false">
+      <validation required="false" />
+    </field>
+
+    <field name="avatar" label="头像" type="image" tableVisible="false">
+      <validation required="false" maxSize="2048" accept=".jpg,.jpeg,.png,.webp" />
+    </field>
+
+    <field name="status" label="状态" type="select" tableVisible="true">
+      <options>
+        <option value="0" label="禁用" />
+        <option value="1" label="正常" />
+      </options>
+      <validation required="true" default="1" />
+    </field>
+
+    <field name="remark" label="备注" type="textarea" tableVisible="false">
+      <validation required="false" maxLength="500" />
+    </field>
+
+    <field name="createdAt" label="创建时间" type="datetime" tableVisible="true" readonly="true">
+      <validation required="false" />
+    </field>
+
+    <field name="updatedAt" label="更新时间" type="datetime" tableVisible="true" readonly="true">
+      <validation required="false" />
+    </field>
+  </fields>
+
+  <!-- 表格配置 -->
+  <table pagination="true" pageSize="20" sortable="true" />
+
+  <!-- 表单配置 -->
+  <form layout="grid" cols="2" labelWidth="100px" />
+
+  <!-- API配置 -->
+  <api prefix="/api/system/user">
+    <endpoint action="list"   method="GET"    path="/"        description="查询列表" />
+    <endpoint action="detail" method="GET"    path="/:id"     description="查询详情" />
+    <endpoint action="create" method="POST"   path="/"        description="新建" />
+    <endpoint action="update" method="PUT"    path="/:id"     description="更新" />
+    <endpoint action="delete" method="DELETE" path="/:id"     description="删除" />
+  </api>
+</modal>

@@ -1,0 +1,23 @@
+{
+  "name": "modal-gen-control",
+  "version": "1.0.0",
+  "description": "XML驱动的业务模型代码生成器 - 根据XML定义生成前端Vue3 class 和后端 NestJS class",
+  "main": "src/index.js",
+  "bin": {
+    "modal-gen": "./src/cli.js"
+  },
+  "scripts": {
+    "gen": "node src/cli.js",
+    "gen:all": "node src/cli.js --all",
+    "gen:watch": "node src/cli.js --watch"
+  },
+  "dependencies": {
+    "xml2js": "^0.6.2",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "chokidar": "^3.5.3",
+    "prettier": "^3.2.5"
+  },
+  "keywords": ["codegen", "xml", "vue3", "nestjs"],
+  "license": "MIT"
+}
