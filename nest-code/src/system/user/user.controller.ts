@@ -15,13 +15,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiOperation({ summary: '查询用户列表' })
-  @Get()
+  @Post()
   findAll(@Query() query: Record<string, any>) {
     return this.userService.findAll(query);
   }
 
   @ApiOperation({ summary: '查询用户详情' })
-  @Get(':id')
+  @Post(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.userService.findOne(id);
   }
@@ -33,14 +33,15 @@ export class UserController {
   }
 
   @ApiOperation({ summary: '更新用户' })
-  @Put(':id')
+  @Post(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
     return this.userService.update(id, dto);
   }
 
   @ApiOperation({ summary: '删除用户' })
-  @Delete(':id')
+  @Post(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.userService.remove(id);
   }
+
 }

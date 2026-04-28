@@ -11,12 +11,12 @@ const BASE_URL = '/api/system/user';
 export const UserApi = {
   /** 查询列表 */
   list(params?: Record<string, any>) {
-    return request.get<{ list: IUser[]; total: number }>(BASE_URL, { params });
+    return request.post<{ list: IUser[]; total: number }>(BASE_URL, params);
   },
 
   /** 查询详情 */
-  detail(id: number | string) {
-    return request.get<IUser>(`${BASE_URL}/${id}`);
+  detail(id: number | string, data?: any) {
+    return request.post<IUser>(`${BASE_URL}/${id}`, data);
   },
 
   /** 新建 */
@@ -26,12 +26,12 @@ export const UserApi = {
 
   /** 更新 */
   update(id: number | string, data: Partial<IUser>) {
-    return request.put<IUser>(`${BASE_URL}/${id}`, data);
+    return request.post<IUser>(`${BASE_URL}/${id}`, data);
   },
 
   /** 删除 */
-  remove(id: number | string) {
-    return request.delete(`${BASE_URL}/${id}`);
+  remove(id: number | string, data?: any) {
+    return request.post(`${BASE_URL}/${id}`, data);
   },
 };
 

@@ -76,10 +76,10 @@
 
   <!-- API配置 -->
   <api prefix="/api/system/user">
-    <endpoint action="list"   method="GET"    path="/"        description="查询列表" />
-    <endpoint action="detail" method="GET"    path="/:id"     description="查询详情" />
+    <endpoint action="list"   method="POST"    path="/"        description="查询列表" />
+    <endpoint action="detail" method="POST"    path="/:id"     description="查询详情" />
     <endpoint action="create" method="POST"   path="/"        description="新建" />
-    <endpoint action="update" method="PUT"    path="/:id"     description="更新" />
-    <endpoint action="delete" method="DELETE" path="/:id"     description="删除" />
+    <endpoint action="update" method="POST"    path="/:id"     description="更新" />
+    <endpoint action="delete" method="POST" path="/:id"     description="删除" />
   </api>
 </modal>

@@ -11,12 +11,12 @@ const BASE_URL = '/api/shop/product';
 export const ProductApi = {
   /** 查询列表 */
   list(params?: Record<string, any>) {
-    return request.get<{ list: IProduct[]; total: number }>(BASE_URL, { params });
+    return request.post<{ list: IProduct[]; total: number }>(BASE_URL, params);
   },
 
   /** 查询详情 */
-  detail(id: number | string) {
-    return request.get<IProduct>(`${BASE_URL}/${id}`);
+  detail(id: number | string, data?: any) {
+    return request.post<IProduct>(`${BASE_URL}/${id}`, data);
   },
 
   /** 新建 */
@@ -26,12 +26,12 @@ export const ProductApi = {
 
   /** 更新 */
   update(id: number | string, data: Partial<IProduct>) {
-    return request.put<IProduct>(`${BASE_URL}/${id}`, data);
+    return request.post<IProduct>(`${BASE_URL}/${id}`, data);
   },
 
   /** 删除 */
-  remove(id: number | string) {
-    return request.delete(`${BASE_URL}/${id}`);
+  remove(id: number | string, data?: any) {
+    return request.post(`${BASE_URL}/${id}`, data);
   },
 };
 

@@ -56,7 +56,6 @@ class NestCodeGenerator {
       }
 
       const nullable = field.validation.required !== 'true';
-      // 显式指定 type，避免 SQLite 下 TypeORM 从 TS 联合类型推断为 "Object"
       const sqliteType = this._getSqliteType(field.type);
       const colOptions = [`type: '${sqliteType}'`];
 
@@ -157,6 +156,7 @@ class NestCodeGenerator {
   // ─────────────────────────────────────────────────────
   genUpdateDto(schema) {
     const className = toPascalCase(schema.name);
+    const kebab = toKebabCase(schema.name);
     return [
       `/**`,
       ` * ${schema.label} UpdateDTO`,
@@ -164,7 +164,7 @@ class NestCodeGenerator {
       ` */`,
       ``,
       `import { PartialType } from '@nestjs/swagger';`,
-      `import { Create${className}Dto } from './create-${toKebabCase(schema.name)}.dto';`,
+      `import { Create${className}Dto } from './create-${kebab}.dto';`,
       ``,
       `export class Update${className}Dto extends PartialType(Create${className}Dto) {}`,
     ].join('\n');
@@ -240,7 +240,7 @@ class NestCodeGenerator {
   }
 
   // ─────────────────────────────────────────────────────
-  // 5. Controller
+  // 5. Controller（修复：读取 endpoint.method）
   // ─────────────────────────────────────────────────────
   genController(schema) {
     const className = toPascalCase(schema.name);
@@ -248,7 +248,23 @@ class NestCodeGenerator {
     const camel = schema.name.charAt(0).toLowerCase() + schema.name.slice(1);
     const prefix = schema.api.prefix.replace(/^\/api\//, '');
 
-    return [
+    const endpointMap = {};
+    for (const ep of schema.api.endpoints) {
+      endpointMap[ep.action] = ep;
+    }
+
+    const toDec = (method) => {
+      const m = (method || 'GET').toUpperCase();
+      switch (m) {
+        case 'GET': return 'Get';
+        case 'POST': return 'Post';
+        case 'PUT': return 'Put';
+        case 'DELETE': return 'Delete';
+        default: return 'Get';
+      }
+    };
+
+    const lines = [
       `/**`,
       ` * ${schema.label} Controller`,
       ` * 自动生成 - 来源：${schema.sourceFile}`,
@@ -265,37 +281,60 @@ class NestCodeGenerator {
       `export class ${className}Controller {`,
       `  constructor(private readonly ${camel}Service: ${className}Service) {}`,
       ``,
-      `  @ApiOperation({ summary: '查询${schema.label}列表' })`,
-      `  @Get()`,
-      `  findAll(@Query() query: Record<string, any>) {`,
-      `    return this.${camel}Service.findAll(query);`,
-      `  }`,
-      ``,
-      `  @ApiOperation({ summary: '查询${schema.label}详情' })`,
-      `  @Get(':id')`,
-      `  findOne(@Param('id', ParseIntPipe) id: number) {`,
-      `    return this.${camel}Service.findOne(id);`,
-      `  }`,
-      ``,
-      `  @ApiOperation({ summary: '新建${schema.label}' })`,
-      `  @Post()`,
-      `  create(@Body() dto: Create${className}Dto) {`,
-      `    return this.${camel}Service.create(dto);`,
-      `  }`,
-      ``,
-      `  @ApiOperation({ summary: '更新${schema.label}' })`,
-      `  @Put(':id')`,
-      `  update(@Param('id', ParseIntPipe) id: number, @Body() dto: Update${className}Dto) {`,
-      `    return this.${camel}Service.update(id, dto);`,
-      `  }`,
-      ``,
-      `  @ApiOperation({ summary: '删除${schema.label}' })`,
-      `  @Delete(':id')`,
-      `  remove(@Param('id', ParseIntPipe) id: number) {`,
-      `    return this.${camel}Service.remove(id);`,
-      `  }`,
-      `}`,
-    ].join('\n');
+    ];
+
+    if (endpointMap.list) {
+      const dec = toDec(endpointMap.list.method);
+      lines.push(`  @ApiOperation({ summary: '查询${schema.label}列表' })`);
+      lines.push(`  @${dec}()`);
+      lines.push(`  findAll(@Query() query: Record<string, any>) {`);
+      lines.push(`    return this.${camel}Service.findAll(query);`);
+      lines.push(`  }`);
+      lines.push(``);
+    }
+
+    if (endpointMap.detail) {
+      const dec = toDec(endpointMap.detail.method);
+      lines.push(`  @ApiOperation({ summary: '查询${schema.label}详情' })`);
+      lines.push(`  @${dec}(':id')`);
+      lines.push(`  findOne(@Param('id', ParseIntPipe) id: number) {`);
+      lines.push(`    return this.${camel}Service.findOne(id);`);
+      lines.push(`  }`);
+      lines.push(``);
+    }
+
+    if (endpointMap.create) {
+      const dec = toDec(endpointMap.create.method);
+      lines.push(`  @ApiOperation({ summary: '新建${schema.label}' })`);
+      lines.push(`  @${dec}()`);
+      lines.push(`  create(@Body() dto: Create${className}Dto) {`);
+      lines.push(`    return this.${camel}Service.create(dto);`);
+      lines.push(`  }`);
+      lines.push(``);
+    }
+
+    if (endpointMap.update) {
+      const dec = toDec(endpointMap.update.method);
+      lines.push(`  @ApiOperation({ summary: '更新${schema.label}' })`);
+      lines.push(`  @${dec}(':id')`);
+      lines.push(`  update(@Param('id', ParseIntPipe) id: number, @Body() dto: Update${className}Dto) {`);
+      lines.push(`    return this.${camel}Service.update(id, dto);`);
+      lines.push(`  }`);
+      lines.push(``);
+    }
+
+    if (endpointMap.delete) {
+      const dec = toDec(endpointMap.delete.method);
+      lines.push(`  @ApiOperation({ summary: '删除${schema.label}' })`);
+      lines.push(`  @${dec}(':id')`);
+      lines.push(`  remove(@Param('id', ParseIntPipe) id: number) {`);
+      lines.push(`    return this.${camel}Service.remove(id);`);
+      lines.push(`  }`);
+      lines.push(``);
+    }
+
+    lines.push(`}`);
+    return lines.join('\n');
   }
 
   // ─────────────────────────────────────────────────────

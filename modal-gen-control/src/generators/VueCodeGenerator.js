@@ -25,9 +25,9 @@ class VueCodeGenerator {
     };
   }
 
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // 1. Model Class
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   genModelClass(schema) {
     const className = toPascalCase(schema.name);
     const lines = [
@@ -74,9 +74,9 @@ class VueCodeGenerator {
     return lines.join('\n');
   }
 
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // 2. 表单字段配置 + 校验规则
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   genFormConfig(schema) {
     const className = toPascalCase(schema.name);
     const lines = [
@@ -164,9 +164,9 @@ class VueCodeGenerator {
     return lines.join('\n');
   }
 
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // 3. 表格列配置
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   genTableConfig(schema) {
     const lines = [
       `/**`,
@@ -221,9 +221,9 @@ class VueCodeGenerator {
     return lines.join('\n');
   }
 
-  // ─────────────────────────────────────────────────────
-  // 4. API Service
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // 4. API Service（修复：读取 endpoint.method）
+  // ─────────────────────────────────────────────
   genApiService(schema) {
     const className = toPascalCase(schema.name);
     const prefix = schema.api.prefix;
@@ -246,42 +246,53 @@ class VueCodeGenerator {
       endpointMap[ep.action] = ep;
     }
 
+    const methodFn = (m) => (m || 'GET').toLowerCase();
+
     if (endpointMap.list) {
+      const m = methodFn(endpointMap.list.method);
       lines.push(`  /** ${endpointMap.list.description || '查询列表'} */`);
       lines.push(`  list(params?: Record<string, any>) {`);
-      lines.push(`    return request.get<{ list: I${className}[]; total: number }>(BASE_URL, { params });`);
+      if (m === 'get') {
+        lines.push(`    return request.get<{ list: I${className}[]; total: number }>(BASE_URL, { params });`);
+      } else {
+        lines.push(`    return request.${m}<{ list: I${className}[]; total: number }>(BASE_URL, params);`);
+      }
       lines.push(`  },`);
       lines.push(``);
     }
 
     if (endpointMap.detail) {
+      const m = methodFn(endpointMap.detail.method);
       lines.push(`  /** ${endpointMap.detail.description || '查询详情'} */`);
-      lines.push(`  detail(id: number | string) {`);
-      lines.push(`    return request.get<I${className}>(\`\${BASE_URL}/\${id}\`);`);
+      lines.push(`  detail(id: number | string, data?: any) {`);
+      lines.push(`    return request.${m}<I${className}>(\`\${BASE_URL}/\${id}\`, data);`);
       lines.push(`  },`);
       lines.push(``);
     }
 
     if (endpointMap.create) {
+      const m = methodFn(endpointMap.create.method);
       lines.push(`  /** ${endpointMap.create.description || '新建'} */`);
       lines.push(`  create(data: Partial<I${className}>) {`);
-      lines.push(`    return request.post<I${className}>(BASE_URL, data);`);
+      lines.push(`    return request.${m}<I${className}>(BASE_URL, data);`);
       lines.push(`  },`);
       lines.push(``);
     }
 
     if (endpointMap.update) {
+      const m = methodFn(endpointMap.update.method);
       lines.push(`  /** ${endpointMap.update.description || '更新'} */`);
       lines.push(`  update(id: number | string, data: Partial<I${className}>) {`);
-      lines.push(`    return request.put<I${className}>(\`\${BASE_URL}/\${id}\`, data);`);
+      lines.push(`    return request.${m}<I${className}>(\`\${BASE_URL}/\${id}\`, data);`);
       lines.push(`  },`);
       lines.push(``);
     }
 
     if (endpointMap.delete) {
+      const m = methodFn(endpointMap.delete.method);
       lines.push(`  /** ${endpointMap.delete.description || '删除'} */`);
-      lines.push(`  remove(id: number | string) {`);
-      lines.push(`    return request.delete(\`\${BASE_URL}/\${id}\`);`);
+      lines.push(`  remove(id: number | string, data?: any) {`);
+      lines.push(`    return request.${m}(\`\${BASE_URL}/\${id}\`, data);`);
       lines.push(`  },`);
     }
 
@@ -292,9 +303,9 @@ class VueCodeGenerator {
     return lines.join('\n');
   }
 
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // 辅助方法
-  // ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   _getDefaultValue(field) {
     const v = field.validation;
     if (v && v.default !== undefined) {

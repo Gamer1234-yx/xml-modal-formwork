@@ -15,13 +15,13 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @ApiOperation({ summary: '查询商品列表' })
-  @Get()
+  @Post()
   findAll(@Query() query: Record<string, any>) {
     return this.productService.findAll(query);
   }
 
   @ApiOperation({ summary: '查询商品详情' })
-  @Get(':id')
+  @Post(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.productService.findOne(id);
   }
@@ -33,14 +33,15 @@ export class ProductController {
   }
 
   @ApiOperation({ summary: '更新商品' })
-  @Put(':id')
+  @Post(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto) {
     return this.productService.update(id, dto);
   }
 
   @ApiOperation({ summary: '删除商品' })
-  @Delete(':id')
+  @Post(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.productService.remove(id);
   }
+
 }
