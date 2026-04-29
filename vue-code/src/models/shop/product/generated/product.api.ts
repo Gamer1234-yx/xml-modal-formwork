@@ -6,35 +6,36 @@
  */
 
 import request from '@/utils/request';
+import type { ApiResponse } from '@/utils/request';
 import type { IProduct } from './product.model';
-import type { ListQuery, DetailQuery, DeleteQuery, ProductListReturn, ProductDeleteReturn } from './product.types';
+import type { ListQuery, DetailQuery, DeleteQuery, ProductFindAllReturn, ProductRemoveReturn } from './product.types';
 
-const BASE_URL = '/api/shop/product';
+const BASE_URL = '/shop/product';
 
 export class ProductApiBase {
   /** 查询商品列表 */
-  list(query: ListQuery): Promise<ProductListReturn> {
-    return request.post<ProductListReturn>(BASE_URL, query);
+  findAll(query: ListQuery): Promise<ApiResponse<ProductFindAllReturn>> {
+    return request.post<ApiResponse<ProductFindAllReturn>>(`${BASE_URL}/list`, query);
   }
 
   /** 查询商品详情 */
-  detail(query: DetailQuery): Promise<IProduct> {
-    return request.post<IProduct>(BASE_URL, query);
+  findOne(id: number): Promise<ApiResponse<IProduct>> {
+    return request.post<ApiResponse<IProduct>>(`${BASE_URL}/detail`, id);
   }
 
   /** 新建商品 */
-  create(body: Partial<IProduct>): Promise<IProduct> {
-    return request.post<IProduct>(BASE_URL, body);
+  create(body: Partial<IProduct>): Promise<ApiResponse<IProduct>> {
+    return request.post<ApiResponse<IProduct>>(`${BASE_URL}/create`, body);
   }
 
   /** 更新商品 */
-  update(data: { id: number, body: Partial<IProduct> }): Promise<IProduct> {
-    return request.post<IProduct>(BASE_URL, data);
+  update(body: Partial<IProduct>): Promise<ApiResponse<IProduct>> {
+    return request.post<ApiResponse<IProduct>>(`${BASE_URL}/update`, body);
   }
 
   /** 删除商品 */
-  remove(query: DeleteQuery): Promise<ProductDeleteReturn> {
-    return request.post<ProductDeleteReturn>(BASE_URL, query);
+  remove(id: number): Promise<ApiResponse<ProductRemoveReturn>> {
+    return request.post<ApiResponse<ProductRemoveReturn>>(`${BASE_URL}/delete`, id);
   }
 
 }

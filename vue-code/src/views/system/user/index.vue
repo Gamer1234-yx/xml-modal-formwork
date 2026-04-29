@@ -2,8 +2,8 @@
   <div>
     <CrudTable
       ref="tableRef"
-      :columns="userTableColumns"
-      :search-fields="userSearchFields"
+      :columns="UserTableColumns"
+      :search-fields="UserSearchFields"
       :api-fn="fetchList"
       @create="openDialog()"
       @edit="openDialog($event)"
@@ -13,8 +13,8 @@
     <CrudDialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      :fields="userFormFields"
-      :rules="userFormRules"
+      :fields="UserFormFields"
+      :rules="UserFormRules"  
       :initial-data="editRow"
       :cols="2"
       label-width="100px"
@@ -29,8 +29,8 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import CrudTable from '@/components/CrudTable/index.vue'
 import CrudDialog from '@/components/CrudDialog/index.vue'
-import { userTableColumns, userSearchFields } from '@/models/system/user/user.table'
-import { userFormFields, userFormRules } from '@/models/system/user/user.form'
+import { UserTableColumns, UserSearchFields } from '@/models/system/user/generated/user.table'
+import { UserFormFields, UserFormRules } from '@/models/system/user/generated/user.form'
 import userApi from '@/models/system/user/user.api'
 
 const tableRef = ref()
@@ -39,7 +39,7 @@ const dialogTitle = ref('新建用户')
 const editRow = ref<Record<string, any>>({})
 
 async function fetchList(params: Record<string, any>) {
-  return userApi.list(params)
+  return userApi.findAll(params)
 }
 
 function openDialog(row?: Record<string, any>) {
@@ -50,7 +50,7 @@ function openDialog(row?: Record<string, any>) {
 
 async function handleSubmit(data: Record<string, any>) {
   if (data.id) {
-    await userApi.update(data.id, data)
+    await userApi.update(data)
     ElMessage.success('更新成功')
   } else {
     await userApi.create(data)

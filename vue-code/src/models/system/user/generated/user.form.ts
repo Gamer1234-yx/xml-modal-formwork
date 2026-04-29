@@ -48,7 +48,7 @@ export const UserFormFields: FormFieldConfig[] = [
     prop: 'gender',
     label: '性别',
     component: 'ElSelect',
-    options: [{ value: 0, label: '未知' }, { value: 1, label: '男' }, { value: 2, label: '女' }],
+    options: [{ value: '0', label: '未知' }, { value: '1', label: '男' }, { value: '2', label: '女' }],
   },
   {
     prop: 'birthday',
@@ -57,15 +57,10 @@ export const UserFormFields: FormFieldConfig[] = [
     componentProps: { type: 'date', valueFormat: 'YYYY-MM-DD' },
   },
   {
-    prop: 'avatar',
-    label: '头像',
-    component: 'ImageUpload',
-  },
-  {
     prop: 'status',
     label: '状态',
     component: 'ElSelect',
-    options: [{ value: 0, label: '禁用' }, { value: 1, label: '正常' }],
+    options: [{ value: '0', label: '禁用' }, { value: '1', label: '正常' }],
   },
   {
     prop: 'remark',

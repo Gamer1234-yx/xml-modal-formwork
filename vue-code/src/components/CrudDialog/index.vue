@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, reactive, watch, nextTick } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { deepClone } from '@/utils'
 
@@ -123,20 +123,38 @@ const emit = defineEmits<{
 
 const visible = ref(props.modelValue)
 const formRef = ref<FormInstance>()
-const formData = ref<Record<string, any>>({})
+const formData = reactive<Record<string, any>>({})
 const submitting = ref(false)
 const defaultSpan = props.cols ? Math.floor(24 / props.cols) : 12
 
 watch(() => props.modelValue, (v) => {
   visible.value = v
-  if (v && props.initialData) {
-    formData.value = deepClone(props.initialData)
-  } else if (v) {
-    formData.value = {}
+})
+
+watch(visible, (v) => {
+  emit('update:modelValue', v)
+  if (v) {
+    nextTick(() => {
+      // if (props.initialData) {
+      //   const cloned = deepClone(props.initialData)
+      //   Object.keys(formData).forEach(key => delete formData[key])
+      //   Object.assign(formData, cloned)
+      // } else {
+      //   Object.keys(formData).forEach(key => delete formData[key])
+      // }
+    })
   }
 })
 
-watch(visible, (v) => emit('update:modelValue', v))
+watch(() => props.initialData, (data) => {
+  if (data) {
+    const cloned = deepClone(data)
+    Object.keys(formData).forEach(key => delete formData[key])
+    Object.assign(formData, cloned)
+  } else {
+    Object.keys(formData).forEach(key => delete formData[key])
+  }
+}, { deep: true })
 
 function handleClose() {
   visible.value = false
@@ -144,11 +162,12 @@ function handleClose() {
 }
 
 async function handleSubmit() {
+  console.log(deepClone(formData))
   if (!formRef.value) return
   await formRef.value.validate()
   submitting.value = true
   try {
-    emit('submit', deepClone(formData.value))
+    emit('submit', deepClone(formData))
   } finally {
     submitting.value = false
   }

@@ -58,7 +58,7 @@ export const ProductFormFields: FormFieldConfig[] = [
     prop: 'status',
     label: '上架状态',
     component: 'ElSelect',
-    options: [{ value: 0, label: '下架' }, { value: 1, label: '上架' }],
+    options: [{ value: '0', label: '下架' }, { value: '1', label: '上架' }],
   },
   {
     prop: 'sort',

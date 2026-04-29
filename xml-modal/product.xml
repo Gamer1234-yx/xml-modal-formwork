@@ -80,7 +80,7 @@
       - modelName[]      → 数组形式（如 IProduct[] / ProductEntity[]）
       - 内联 <returns>   → 自定义返回结构
     -->
-    <endpoint action="list"   method="POST" path="/list"   description="查询商品列表">
+    <endpoint action="findAll"  method="POST" path="/list"   description="查询商品列表">
       <param name="query" type="ListQuery" required="true" />
       <!-- 返回类型：分页列表 -->
       <returns>
@@ -91,24 +91,23 @@
       </returns>
     </endpoint>
 
-    <endpoint action="detail" method="POST" path="/detail" description="查询商品详情">
-      <param name="query" type="DetailQuery" required="true" />
+    <endpoint action="findOne" method="POST" path="/detail" description="查询商品详情">
+      <param name="id" type="number" required="true" />
       <returns type="modelName" />
     </endpoint>
 
     <endpoint action="create" method="POST" path="/create" description="新建商品">
-      <param name="body" type="CreateDto" required="true" />
+      <param name="body" type="modelName" required="true" />
       <returns type="modelName" />
     </endpoint>
 
     <endpoint action="update" method="POST" path="/update" description="更新商品">
-      <param name="id"   type="number" required="true" />
-      <param name="body" type="UpdateDto" required="true" />
+      <param name="body" type="modelName" required="true" />
       <returns type="modelName" />
     </endpoint>
 
-    <endpoint action="delete" method="POST" path="/delete" description="删除商品">
-      <param name="query" type="DeleteQuery" required="true" />
+    <endpoint action="remove" method="POST" path="/delete" description="删除商品">
+      <param name="id" type="number" required="true" />
       <!-- 返回类型：删除结果 -->
       <returns>
         <field name="message" type="string" />

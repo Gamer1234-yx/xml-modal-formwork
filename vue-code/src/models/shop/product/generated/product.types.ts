@@ -21,5 +21,5 @@ export interface DeleteQuery {
   id: number;
 }
 
-export type ProductListReturn = { list: IProduct[]; total: number; page: number; pageSize: number; };
-export type ProductDeleteReturn = { message: string; };
+export type ProductFindAllReturn = { list: IProduct[]; total: number; page: number; pageSize: number; };
+export type ProductRemoveReturn = { message: string; };

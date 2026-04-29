@@ -6,35 +6,41 @@
  */
 
 import request from '@/utils/request';
+import type { ApiResponse } from '@/utils/request';
 import type { IUser } from './user.model';
-import type { ListQuery, DetailQuery, DeleteQuery, UserListReturn, UserDeleteReturn } from './user.types';
+import type { ListQuery, UserFindAllReturn, UserRemoveReturn } from './user.types';
 
-const BASE_URL = '/api/system/user';
+const BASE_URL = '/system/user';
 
 export class UserApiBase {
   /** 查询列表 */
-  list(query: ListQuery): Promise<UserListReturn> {
-    return request.post<UserListReturn>(BASE_URL, query);
+  findAll(query: ListQuery): Promise<ApiResponse<UserFindAllReturn>> {
+    return request.post<ApiResponse<UserFindAllReturn>>(`${BASE_URL}/list`, query);
   }
 
   /** 查询详情 */
-  detail(query: DetailQuery): Promise<IUser> {
-    return request.post<IUser>(BASE_URL, query);
+  findOne(id: number): Promise<ApiResponse<IUser>> {
+    return request.post<ApiResponse<IUser>>(`${BASE_URL}/detail`, id);
   }
 
   /** 新建 */
-  create(body: Partial<IUser>): Promise<IUser> {
-    return request.post<IUser>(BASE_URL, body);
+  create(body: Partial<IUser>): Promise<ApiResponse<IUser>> {
+    return request.post<ApiResponse<IUser>>(`${BASE_URL}/create`, body);
   }
 
   /** 更新 */
-  update(data: { id: number, body: Partial<IUser> }): Promise<IUser> {
-    return request.post<IUser>(BASE_URL, data);
+  update(body: Partial<IUser>): Promise<ApiResponse<IUser>> {
+    return request.post<ApiResponse<IUser>>(`${BASE_URL}/update`, body);
   }
 
   /** 删除 */
-  remove(query: DeleteQuery): Promise<UserDeleteReturn> {
-    return request.post<UserDeleteReturn>(BASE_URL, query);
+  remove(id: number): Promise<ApiResponse<UserRemoveReturn>> {
+    return request.post<ApiResponse<UserRemoveReturn>>(`${BASE_URL}/delete`, id);
+  }
+
+  /** 自定义方法 */
+  customUpdate(body: Partial<IUser>): Promise<ApiResponse<IUser>> {
+    return request.post<ApiResponse<IUser>>(`${BASE_URL}/customUpdate`, body);
   }
 
 }

@@ -248,7 +248,6 @@ class NestCodeGenerator {
   genServiceBase(schema) {
     const className = toPascalCase(schema.name);
     const kebab = toKebabCase(schema.name);
-    const camel = schema.name.charAt(0).toLowerCase() + schema.name.slice(1);
 
     const lines = [
       `/**`,
@@ -260,10 +259,8 @@ class NestCodeGenerator {
       ``,
       `import { Injectable, NotFoundException } from '@nestjs/common';`,
       `import { InjectRepository } from '@nestjs/typeorm';`,
-      `import { Repository, Like, FindManyOptions } from 'typeorm';`,
+      `import { Repository } from 'typeorm';`,
       `import { ${className}Entity } from './${kebab}.entity';`,
-      `import { Create${className}Dto } from './dto/create-${kebab}.dto';`,
-      `import { Update${className}Dto } from './dto/update-${kebab}.dto';`,
       ``,
       `@Injectable()`,
       `export class ${className}ServiceBase {`,
@@ -272,63 +269,92 @@ class NestCodeGenerator {
       `    protected readonly repo: Repository<${className}Entity>,`,
       `  ) {}`,
       ``,
-      `  /**`,
-      `   * 查询列表（支持分页 + 模糊搜索）`,
-      `   * 自定义查询逻辑：在上级目录的 ${kebab}.service.ts 中重写此方法`,
-      `   */`,
-      `  async findAll(query: Record<string, any> = {}): Promise<{ list: ${className}Entity[]; total: number; page: number; pageSize: number }> {`,
-      `    const { page = 1, pageSize = 20, ...filters } = query;`,
-      `    const where: any = {};`,
+      `  /** 查询列表 */`,
+      `  async findAll(query: any): Promise<any> {`,
+      `    const { page = 1, pageSize = 20 } = query || {};`,
+      `    const [list, total] = await this.repo.findAndCount({`,
+      `      skip: (page - 1) * pageSize,`,
+      `      take: pageSize,`,
+      `      order: { id: 'DESC' },`,
+      `    });`,
+      `    return { list, total, page: +page, pageSize: +pageSize };`,
+      `  }`,
+      ``,
+      `  /** 查询单条 */`,
+      `  async findOne(id: number): Promise<${className}Entity> {`,
+      `    const record = await this.repo.findOne({ where: { id } });`,
+      `    if (!record) throw new NotFoundException(\`${schema.label} id=\${id} 不存在\`);`,
+      `    return record;`,
+      `  }`,
+      ``,
+      `  /** 新建 */`,
+      `  async create(body: Partial<${className}Entity>): Promise<${className}Entity> {`,
+      `    const entity = this.repo.create(body);`,
+      `    return this.repo.save(entity);`,
+      `  }`,
+      ``,
+      `  /** 更新 */`,
+      `  async update(body: Partial<${className}Entity>): Promise<${className}Entity> {`,
+      `    await this.findOne(body.id);`,
+      `    await this.repo.update(body.id, body);`,
+      `    return this.findOne(body.id);`,
+      `  }`,
+      ``,
+      `  /** 删除 */`,
+      `  async remove(id: number): Promise<{ message: string }> {`,
+      `    await this.findOne(id);`,
+      `    await this.repo.delete(id);`,
+      `    return { message: '删除成功' };`,
+      `  }`,
+      ``,
     ];
+    const hasUseActionList = ['create', 'update', 'remove', 'findOne', 'findAll'];
+    for (const ep of schema.api.endpoints) {
+      const action = ep.action;
 
-    for (const f of schema.fields.filter(f => f.searchable)) {
-      lines.push(`    if (filters.${f.name} !== undefined && filters.${f.name} !== '') {`);
-      lines.push(`      where.${f.name} = Like(\`%\${filters.${f.name}}%\`);`);
-      lines.push(`    }`);
+      let returnType = this._mapReturnsType(ep.returns, className);
+      if (returnType.startsWith('{')) {
+        // 使用类型别名
+        const aliasName = `${className}${this._toPascalCase(action)}Return`;
+        returnType = aliasName;
+      }
+      const returnAnnotation = `Promise<${returnType} | void>`;
+
+      // 根据 endpoint 的 <param> 定义生成方法签名
+      const params = ep.params || [];
+      
+      // 统一生成方法签名
+      let paramDef = 'body: any';
+      let callArg = 'body';
+      
+      if (params.length > 0) {
+        // 单个参数：直接使用参数名和类型
+        if (params.length === 1) {
+          const p = params[0];
+          const type = this._mapParamType(p.type, className);
+          paramDef = `${p.name}: ${type}`;
+          callArg = p.name;
+        } else {
+          // 多个参数：使用对象类型
+          const paramSig = params.map(p => {
+            const type = this._mapParamType(p.type, className);
+            const isRequired = p.required === 'true';
+            return `${p.name}${isRequired ? '' : '?'}: ${type}`;
+          }).join(', ');
+          paramDef = `body: { ${paramSig} }`;
+          callArg = 'body';
+        }
+      }
+      if (!hasUseActionList.includes(action)) {
+        lines.push(`  /** ${ep.description || action} */`);
+        lines.push(`  async ${action}(${paramDef}): ${returnAnnotation} {`);
+        lines.push(`    // TODO: 实现 ${action} 方法的业务逻辑`);
+        lines.push(`  }`);
+      }
     }
-
-    lines.push(`    const [list, total] = await this.repo.findAndCount({`);
-    lines.push(`      where,`);
-    lines.push(`      skip: (page -1) * pageSize,`);
-    lines.push(`      take: pageSize,`);
-    lines.push(`      order: { id: 'DESC' },`);
-    lines.push(`    });`);
-    lines.push(`    return { list, total, page: +page, pageSize: +pageSize };`);
-    lines.push(`  }`);
-    lines.push(``);
-
-    lines.push(`  /** 查询单条记录 */`);
-    lines.push(`  async findOne(id: number): Promise<${className}Entity> {`);
-    lines.push(`    const record = await this.repo.findOne({ where: { id } });`);
-    lines.push(`    if (!record) throw new NotFoundException(\`${schema.label} id=\${id} 不存在\`);`);
-    lines.push(`    return record;`);
-    lines.push(`  }`);
-    lines.push(``);
-
-    lines.push(`  /** 新建记录 */`);
-    lines.push(`  async create(dto: Create${className}Dto): Promise<${className}Entity> {`);
-    lines.push(`    const entity = this.repo.create(dto);`);
-    lines.push(`    return this.repo.save(entity);`);
-    lines.push(`  }`);
-    lines.push(``);
-
-    lines.push(`  /** 更新记录 */`);
-    lines.push(`  async update(id: number, dto: Update${className}Dto): Promise<${className}Entity> {`);
-    lines.push(`    await this.findOne(id);`);
-    lines.push(`    await this.repo.update(id, dto as any);`);
-    lines.push(`    return this.findOne(id);`);
-    lines.push(`  }`);
-    lines.push(``);
-
-    lines.push(`  /** 删除记录 */`);
-    lines.push(`  async remove(id: number): Promise<{ message: string }> {`);
-    lines.push(`    await this.findOne(id);`);
-    lines.push(`    await this.repo.delete(id);`);
-    lines.push(`    return { message: '删除成功' };`);
-    lines.push(`  }`);
     lines.push(`}`);
-
     return lines.join('\n');
+    
   }
 
   // ─────────────────────────────────────────────────────
@@ -434,96 +460,36 @@ class NestCodeGenerator {
         const aliasName = `${className}${this._toPascalCase(action)}Return`;
         returnType = aliasName;
       }
-      const returnAnnotation = `Promise<${returnType}>`;
+      const returnAnnotation = `Promise<${returnType} | void>`;
 
       // 根据 endpoint 的 <param> 定义生成方法签名
       const params = ep.params || [];
-      if (params.length === 0) {
-        // 无参数定义：使用 any
-        lines.push(`  async ${action}(@Body() body: any): ${returnAnnotation} {`);
-        lines.push(`    // TODO: 根据业务逻辑调用 Service`);
-      } else if (params.length === 1 && !params[0].type.includes('Dto') && !params[0].type.includes('Entity')) {
-        // 单个参数且不是 DTO/Entity：可能是引用类型（如 ListQuery）
-        const param = params[0];
-        const paramType = this._mapParamType(param.type, className);
-        const isRequired = param.required === 'true';
-        
-        lines.push(`  async ${action}(@Body() ${param.name}${isRequired ? '' : '?'}: ${paramType}): ${returnAnnotation} {`);
-        
-        // 根据 action 自动调用 Service 方法
-        if (action === 'list' || action === 'findAll' || action === 'query') {
-          lines.push(`    return this.${camel}Service.findAll(${param.name});`);
-        } else if (action === 'detail' || action === 'findOne' || action === 'get') {
-          lines.push(`    return this.${camel}Service.findOne(${param.name}.id);`);
-        } else if (action === 'delete' || action === 'remove') {
-          lines.push(`    return this.${camel}Service.remove(${param.name}.id);`);
+      
+      // 统一生成方法签名
+      let paramDef = 'body: any';
+      let callArg = 'body';
+      
+      if (params.length > 0) {
+        // 单个参数：直接使用参数名和类型
+        if (params.length === 1) {
+          const p = params[0];
+          const type = this._mapParamType(p.type, className);
+          paramDef = `${p.name}: ${type}`;
+          callArg = p.name;
         } else {
-          lines.push(`    // TODO: 自定义逻辑`);
-        }
-      } else {
-        // 有参数定义：生成具体的方法签名
-        // 特殊处理：如果只有一个 param 且类型是 DTO/Entity，直接展开，不嵌套
-        const isDtoParam = params.length === 1 && 
-          (params[0].type === 'CreateDto' || params[0].type === 'UpdateDto' || params[0].type === 'Entity');
-        
-        if (isDtoParam) {
-          // 直接把 body 当作 DTO
-          const dtoType = this._mapParamType(params[0].type, className);
-          lines.push(`  async ${action}(@Body() dto: ${dtoType}): ${returnAnnotation} {`);
-          
-          if (action === 'create' || action === 'add' || action === 'insert') {
-            lines.push(`    return this.${camel}Service.create(dto);`);
-          } else if (action === 'update' || action === 'edit') {
-            // update 需要 id，从 body.id 获取
-            lines.push(`    return this.${camel}Service.update(dto.id, dto);`);
-          }
-      } else {
-        // 多个参数：智能生成方法签名
-        // 规则：如果包含 DTO 类型参数，合并类型；否则嵌套在 body 中
-        const dtoParam = params.find(p => p.type === 'CreateDto' || p.type === 'UpdateDto' || p.type === 'Entity');
-        
-        if (dtoParam) {
-          // 有 DTO 参数：合并类型（DTO & { id?, ... }）
-          const dtoType = this._mapParamType(dtoParam.type, className);
-          const otherParams = params.filter(p => p !== dtoParam).map(p => {
+          // 多个参数：使用对象类型
+          const paramSig = params.map(p => {
             const type = this._mapParamType(p.type, className);
             const isRequired = p.required === 'true';
             return `${p.name}${isRequired ? '' : '?'}: ${type}`;
-          });
-          
-          const mergedType = otherParams.length > 0 
-            ? `${dtoType} & { ${otherParams.join(', ')} }`
-            : dtoType;
-          
-          lines.push(`  async ${action}(@Body() dto: ${mergedType}): ${returnAnnotation} {`);
-        } else {
-          // 无 DTO 参数：嵌套在 body 对象中
-          const paramSig = params.map(p => {
-            const name = p.name;
-            const type = this._mapParamType(p.type, className);
-            const isRequired = p.required === 'true';
-            return `${name}${isRequired ? '' : '?'}: ${type}`;
           }).join(', ');
-
-          lines.push(`  async ${action}(@Body() body: { ${paramSig} }): ${returnAnnotation} {`);
-        }
-
-        // 根据 action 自动调用 Service 方法
-        if (action === 'list' || action === 'findAll' || action === 'query') {
-          lines.push(`    return this.${camel}Service.findAll(body);`);
-        } else if (action === 'detail' || action === 'findOne' || action === 'get') {
-          lines.push(`    return this.${camel}Service.findOne(body.id);`);
-        } else if (action === 'create' || action === 'add' || action === 'insert') {
-          lines.push(`    return this.${camel}Service.create(dto);`);
-        } else if (action === 'update' || action === 'edit') {
-          lines.push(`    return this.${camel}Service.update(dto.id, dto);`);
-        } else if (action === 'delete' || action === 'remove') {
-          lines.push(`    return this.${camel}Service.remove(body.id);`);
-        } else {
-          lines.push(`    // TODO: 自定义逻辑`);
+          paramDef = `body: { ${paramSig} }`;
+          callArg = 'body';
         }
       }
-      }
+      
+      lines.push(`  async ${action}(@Body() ${paramDef}): ${returnAnnotation} {`);
+      lines.push(`    return this.${camel}Service.${action}(${callArg});`);
       lines.push(`  }`);
       lines.push(``);
     }
@@ -647,10 +613,11 @@ class NestCodeGenerator {
       return `${tsBase}[]`;
     }
 
-    // 复杂类型：CreateDto、UpdateDto、或实体名
+    // 复杂类型：CreateDto、UpdateDto、Entity、或 modelName
     if (paramType === 'CreateDto') return `Create${className}Dto`;
     if (paramType === 'UpdateDto') return `Update${className}Dto`;
     if (paramType === 'Entity')   return `${className}Entity`;
+    if (paramType === 'modelName') return `Partial<${className}Entity>`;
 
     // 自定义类型：ListQuery、DetailQuery 等（首字母大写的类型名）
     if (/^[A-Z]/.test(paramType)) return paramType;

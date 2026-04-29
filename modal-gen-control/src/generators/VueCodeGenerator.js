@@ -110,7 +110,8 @@ class VueCodeGenerator {
       if (field.readonly) lines.push(`    readonly: true,`);
       if (field.options && field.options.length > 0) {
         const opts = field.options.map(o =>
-          `{ value: ${isNaN(o.value) ? `'${o.value}'` : o.value}, label: '${o.label}' }`
+          `{ value: '${o.value}', label: '${o.label}' }`
+          // `{ value: ${isNaN(o.value) ? `'${o.value}'` : o.value}, label: '${o.label}' }`
         ).join(', ');
         lines.push(`    options: [${opts}],`);
       }
@@ -196,7 +197,8 @@ class VueCodeGenerator {
       if (field.options && field.options.length > 0) {
         lines.push(`    tag: true,`);
         const opts = field.options.map(o =>
-          `{ value: ${isNaN(o.value) ? `'${o.value}'` : o.value}, label: '${o.label}' }`
+          `{ value: '${o.value}', label: '${o.label}' }`
+          // `{ value: ${isNaN(o.value) ? `'${o.value}'` : o.value}, label: '${o.label}' }`
         ).join(', ');
         lines.push(`    options: [${opts}],`);
       }
@@ -305,12 +307,13 @@ class VueCodeGenerator {
       ` */`,
       ``,
       `import request from '@/utils/request';`,
+      `import type { ApiResponse } from '@/utils/request';`,
       `import type { I${className} } from './${kebab}.model';`,
       allTypeNames.length > 0
         ? `import type { ${allTypeNames.join(', ')} } from './${kebab}.types';`
         : ``,
       ``,
-      `const BASE_URL = '${prefix}';`,
+      `const BASE_URL = '${prefix.replace(/^\/api/, '')}';`,
       ``,
       `export class ${className}ApiBase {`,
     ];
@@ -356,11 +359,12 @@ class VueCodeGenerator {
       }
 
       // 方法名映射（delete → remove，保持向后兼容）
-      const methodName = action === 'delete' ? 'remove' : action;
+      const methodName = action;
+      const path = ep.path || action;
 
       lines.push(`  /** ${description} */`);
-      lines.push(`  ${methodName}(${methodSig}): Promise<${returnType}> {`);
-      lines.push(`    return request.${m}<${returnType}>(BASE_URL, ${bodyArg});`);
+      lines.push(`  ${methodName}(${methodSig}): Promise<ApiResponse<${returnType}>> {`);
+      lines.push(`    return request.${m}<ApiResponse<${returnType}>>(\`\${BASE_URL}${path}\`, ${bodyArg});`);
       lines.push(`  }`);
       lines.push(``);
     }
@@ -455,8 +459,6 @@ class VueCodeGenerator {
     // modelName 关键字：类型名等于 className 时，映射为 IUser
     if (returnType === className) return `I${className}`;
     if (returnType === `${className}[]`) return `I${className}[]`;
-    if (returnType === 'CreateDto') return `Partial<I${className}>`;
-    if (returnType === 'UpdateDto') return `Partial<I${className}>`;
 
     // 基础类型
     const baseTypeMap = {
@@ -487,9 +489,7 @@ class VueCodeGenerator {
     }
 
     // 特殊类型映射（Vue 端）
-    if (paramType === 'CreateDto') return `Partial<I${className}>`;
-    if (paramType === 'UpdateDto') return `Partial<I${className}>`;
-    if (paramType === 'Entity') return `I${className}`;
+    if (paramType === 'modelName') return `Partial<I${className}>`;
 
     // 自定义类型（如 ListQuery, DetailQuery）- 保持原样
     if (/^[A-Z]/.test(paramType)) return paramType;

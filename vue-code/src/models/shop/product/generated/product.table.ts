@@ -45,7 +45,7 @@ export const ProductTableColumns: TableColumnConfig[] = [
     label: '上架状态',
     sortable: true,
     tag: true,
-    options: [{ value: 0, label: '下架' }, { value: 1, label: '上架' }],
+    options: [{ value: '0', label: '下架' }, { value: '1', label: '上架' }],
   },
   {
     prop: 'createdAt',

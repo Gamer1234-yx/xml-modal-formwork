@@ -13,7 +13,7 @@ import { ProductEntity } from './product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 // 导入可复用的参数类型和返回类型
-import type { ListQuery, DetailQuery, DeleteQuery, ProductListReturn, ProductDeleteReturn } from './product.types';
+import type { ListQuery, DetailQuery, DeleteQuery, ProductFindAllReturn, ProductRemoveReturn } from './product.types';
 
 @ApiTags('商品')
 @Controller('shop/product')
@@ -22,32 +22,32 @@ export class ProductControllerBase {
 
   @ApiOperation({ summary: '查询商品列表' })
   @Post('list')
-  async list(@Body() query: ListQuery): Promise<ProductListReturn> {
+  async findAll(@Body() query: ListQuery): Promise<ProductFindAllReturn | void> {
     return this.productService.findAll(query);
   }
 
   @ApiOperation({ summary: '查询商品详情' })
   @Post('detail')
-  async detail(@Body() query: DetailQuery): Promise<ProductEntity> {
-    return this.productService.findOne(query.id);
+  async findOne(@Body() id: number): Promise<ProductEntity | void> {
+    return this.productService.findOne(id);
   }
 
   @ApiOperation({ summary: '新建商品' })
   @Post('create')
-  async create(@Body() dto: CreateProductDto): Promise<ProductEntity> {
-    return this.productService.create(dto);
+  async create(@Body() body: Partial<ProductEntity>): Promise<ProductEntity | void> {
+    return this.productService.create(body);
   }
 
   @ApiOperation({ summary: '更新商品' })
   @Post('update')
-  async update(@Body() dto: UpdateProductDto & { id: number }): Promise<ProductEntity> {
-    return this.productService.update(dto.id, dto);
+  async update(@Body() body: Partial<ProductEntity>): Promise<ProductEntity | void> {
+    return this.productService.update(body);
   }
 
   @ApiOperation({ summary: '删除商品' })
   @Post('delete')
-  async delete(@Body() query: DeleteQuery): Promise<ProductDeleteReturn> {
-    return this.productService.remove(query.id);
+  async remove(@Body() id: number): Promise<ProductRemoveReturn | void> {
+    return this.productService.remove(id);
   }
 
 }

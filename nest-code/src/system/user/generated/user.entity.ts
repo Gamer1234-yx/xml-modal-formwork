@@ -43,10 +43,6 @@ export class UserEntity {
   @Column({ type: 'text', nullable: true })
   birthday: string;
 
-  /** 头像 */
-  @Column({ type: 'text', nullable: true })
-  avatar: string;
-
   /** 状态 */
   @Column({ type: 'text', default: 1 })
   status: string;

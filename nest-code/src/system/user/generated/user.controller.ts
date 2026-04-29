@@ -13,7 +13,7 @@ import { UserEntity } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 // 导入可复用的参数类型和返回类型
-import type { ListQuery, DetailQuery, DeleteQuery, UserListReturn, UserDeleteReturn } from './user.types';
+import type { ListQuery, UserFindAllReturn, UserRemoveReturn } from './user.types';
 
 @ApiTags('用户')
 @Controller('system/user')
@@ -22,32 +22,38 @@ export class UserControllerBase {
 
   @ApiOperation({ summary: '查询列表' })
   @Post('list')
-  async list(@Body() query: ListQuery): Promise<UserListReturn> {
+  async findAll(@Body() query: ListQuery): Promise<UserFindAllReturn | void> {
     return this.userService.findAll(query);
   }
 
   @ApiOperation({ summary: '查询详情' })
   @Post('detail')
-  async detail(@Body() query: DetailQuery): Promise<UserEntity> {
-    return this.userService.findOne(query.id);
+  async findOne(@Body() id: number): Promise<UserEntity | void> {
+    return this.userService.findOne(id);
   }
 
   @ApiOperation({ summary: '新建' })
   @Post('create')
-  async create(@Body() dto: CreateUserDto): Promise<UserEntity> {
-    return this.userService.create(dto);
+  async create(@Body() body: Partial<UserEntity>): Promise<UserEntity | void> {
+    return this.userService.create(body);
   }
 
   @ApiOperation({ summary: '更新' })
   @Post('update')
-  async update(@Body() dto: UpdateUserDto & { id: number }): Promise<UserEntity> {
-    return this.userService.update(dto.id, dto);
+  async update(@Body() body: Partial<UserEntity>): Promise<UserEntity | void> {
+    return this.userService.update(body);
   }
 
   @ApiOperation({ summary: '删除' })
   @Post('delete')
-  async delete(@Body() query: DeleteQuery): Promise<UserDeleteReturn> {
-    return this.userService.remove(query.id);
+  async remove(@Body() id: number): Promise<UserRemoveReturn | void> {
+    return this.userService.remove(id);
+  }
+
+  @ApiOperation({ summary: '自定义方法' })
+  @Post('customUpdate')
+  async customUpdate(@Body() body: Partial<UserEntity>): Promise<UserEntity | void> {
+    return this.userService.customUpdate(body);
   }
 
 }

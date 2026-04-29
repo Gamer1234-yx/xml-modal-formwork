@@ -40,14 +40,14 @@ export const UserTableColumns: TableColumnConfig[] = [
     label: '性别',
     sortable: true,
     tag: true,
-    options: [{ value: 0, label: '未知' }, { value: 1, label: '男' }, { value: 2, label: '女' }],
+    options: [{ value: '0', label: '未知' }, { value: '1', label: '男' }, { value: '2', label: '女' }],
   },
   {
     prop: 'status',
     label: '状态',
     sortable: true,
     tag: true,
-    options: [{ value: 0, label: '禁用' }, { value: 1, label: '正常' }],
+    options: [{ value: '0', label: '禁用' }, { value: '1', label: '正常' }],
   },
   {
     prop: 'createdAt',

@@ -21,8 +21,6 @@ export interface IUser {
   gender?: string | number;
   /** 生日 */
   birthday?: string;
-  /** 头像 */
-  avatar?: string;
   /** 状态 */
   status: string | number;
   /** 备注 */
@@ -50,8 +48,6 @@ export class UserModel implements IUser {
   gender: string | number = '';
   /** 生日 */
   birthday: string = '';
-  /** 头像 */
-  avatar: string = '';
   /** 状态 */
   status: string | number = '1';
   /** 备注 */

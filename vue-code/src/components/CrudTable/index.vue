@@ -1,6 +1,6 @@
 <template>
   <!-- 搜索栏 -->
-  <el-card v-if="searchFields.length" class="search-card" shadow="never">
+  <el-card v-if="searchFields?.length" class="search-card" shadow="never">
     <el-form :model="searchForm" inline @submit.prevent="handleSearch">
       <el-form-item
         v-for="field in searchFields"
@@ -72,7 +72,7 @@
         <template #default="{ row }">
           <!-- 标签渲染 -->
           <template v-if="col.tag && col.options">
-            <el-tag :type="getTagType(col.options, row[col.prop])">
+            <el-tag v-if="getLabel(col.options, row[col.prop])" :type="getTagType(col.options, row[col.prop])">
               {{ getLabel(col.options, row[col.prop]) }}
             </el-tag>
           </template>
@@ -107,19 +107,18 @@
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :total="pagination.total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="fetchData"
-        @current-change="fetchData"
+        :page-size-options="['10', '20', '50', '100']"
+        layout="total, page-size-selector, prev, pager, next, jumper"
       />
     </div>
   </el-card>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { Search, Refresh, Plus, RefreshRight, Edit, Delete } from '@element-plus/icons-vue'
 import { formatDate, getLabel } from '@/utils'
+import { ApiResponse } from '@/utils/request'
 
 interface Column {
   prop: string
@@ -142,7 +141,7 @@ interface SearchField {
 const props = defineProps<{
   columns: Column[]
   searchFields?: SearchField[]
-  apiFn: (params: Record<string, any>) => Promise<{ list: any[]; total: number }>
+  apiFn: (params: Record<string, any>) => Promise<ApiResponse<{ list: any[]; total: number }>>
 }>()
 
 const emit = defineEmits<{
@@ -156,7 +155,6 @@ const searchForm = reactive<Record<string, any>>({})
 const loading = ref(false)
 const tableData = ref<any[]>([])
 const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-
 async function fetchData() {
   loading.value = true
   try {
@@ -165,12 +163,20 @@ async function fetchData() {
       page: pagination.page,
       pageSize: pagination.pageSize,
     })
-    tableData.value = res.list
-    pagination.total = res.total
+    tableData.value = res.data.list || []
+    pagination.total = res.data.total || 0
   } finally {
     loading.value = false
   }
 }
+
+watch(
+  () => [pagination.page, pagination.pageSize],
+  () => {
+    fetchData()
+  },
+  { immediate: false }
+)
 
 function handleSearch() {
   pagination.page = 1

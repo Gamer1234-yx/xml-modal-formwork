@@ -13,13 +13,5 @@ export interface ListQuery {
   email?: string;
 }
 
-export interface DetailQuery {
-  id: number;
-}
-
-export interface DeleteQuery {
-  id: number;
-}
-
-export type UserListReturn = { list: UserEntity[]; total: number; page: number; pageSize: number; };
-export type UserDeleteReturn = { message: string; };
+export type UserFindAllReturn = { list: UserEntity[]; total: number; page: number; pageSize: number; };
+export type UserRemoveReturn = { message: string; };

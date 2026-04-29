@@ -45,10 +45,6 @@ export class CreateUserDto {
   @IsOptional()
   birthday?: string;
 
-  /** 头像 */
-  @IsOptional()
-  avatar?: string;
-
   /** 状态 */
   @IsNotEmpty({ message: '状态不能为空' })
   status: string;

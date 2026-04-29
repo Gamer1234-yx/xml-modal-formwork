@@ -43,10 +43,6 @@
       <validation required="false" />
     </field>
 
-    <field name="avatar" label="头像" type="image" tableVisible="false">
-      <validation required="false" maxSize="2048" accept=".jpg,.jpeg,.png,.webp" />
-    </field>
-
     <field name="status" label="状态" type="select" tableVisible="true">
       <options>
         <option value="0" label="禁用" />
@@ -84,21 +80,13 @@
       <param name="email"    type="string" />
     </type>
 
-    <type name="DetailQuery">
-      <param name="id" type="number" required="true" />
-    </type>
-
-    <type name="DeleteQuery">
-      <param name="id" type="number" required="true" />
-    </type>
-
     <!--
       returns 类型说明：
       - modelName        → 引用当前模型类型（如 User → IUser / UserEntity）
       - modelName[]      → 数组形式（如 IUser[] / UserEntity[]）
       - 内联 <returns>   → 自定义返回结构
     -->
-    <endpoint action="list" method="POST" path="/list" description="查询列表">
+    <endpoint action="findAll" method="POST" path="/list" description="查询列表">
       <param name="query" type="ListQuery" required="true" />
       <!-- 返回类型：分页列表 -->
       <returns>
@@ -109,28 +97,32 @@
       </returns>
     </endpoint>
 
-    <endpoint action="detail" method="POST" path="/detail" description="查询详情">
-      <param name="query" type="DetailQuery" required="true" />
+    <endpoint action="findOne" method="POST" path="/detail" description="查询详情">
+      <param name="id" type="number" required="true" />
       <returns type="modelName" />
     </endpoint>
 
     <endpoint action="create" method="POST" path="/create" description="新建">
-      <param name="body" type="CreateDto" required="true" />
+      <param name="body" type="modelName" required="true" />
       <returns type="modelName" />
     </endpoint>
 
     <endpoint action="update" method="POST" path="/update" description="更新">
-      <param name="id"   type="number" required="true" />
-      <param name="body" type="UpdateDto" required="true" />
+      <param name="body" type="modelName" required="true" />
       <returns type="modelName" />
     </endpoint>
 
-    <endpoint action="delete" method="POST" path="/delete" description="删除">
-      <param name="query" type="DeleteQuery" required="true" />
+    <endpoint action="remove" method="POST" path="/delete" description="删除">
+      <param name="id" type="number" required="true" />
       <!-- 返回类型：删除结果 -->
       <returns>
         <field name="message" type="string" />
       </returns>
+    </endpoint>
+
+    <endpoint action="customUpdate" method="POST" path="/customUpdate" description="自定义方法">
+      <param name="body" type="modelName" required="true" />
+      <returns type="modelName" />
     </endpoint>
   </api>
 </modal>
