@@ -1,47 +1,20 @@
 /**
- * 商品 Controller
- * 自动生成 - 来源：product.xml
+ * 商品 Controller（自定义接口逻辑）
+ * 此文件不会被生成器覆盖，请在此处编写自定义接口逻辑
+ *
+ * 使用方式：
+ *   1. 直接重写基类接口方法
+ *   2. 新增自定义接口（记得加 @Get/@Post 等装饰器）
  */
 
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ProductService } from './product.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { Controller, ParseIntPipe } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { ProductControllerBase } from './generated/product.controller';
+import { CreateProductDto } from './generated/dto/create-product.dto';
+import { UpdateProductDto } from './generated/dto/update-product.dto';
 
 @ApiTags('商品')
 @Controller('shop/product')
-export class ProductController {
-  constructor(private readonly productService: ProductService) {}
-
-  @ApiOperation({ summary: '查询商品列表' })
-  @Post()
-  findAll(@Query() query: Record<string, any>) {
-    return this.productService.findAll(query);
-  }
-
-  @ApiOperation({ summary: '查询商品详情' })
-  @Post(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.productService.findOne(id);
-  }
-
-  @ApiOperation({ summary: '新建商品' })
-  @Post()
-  create(@Body() dto: CreateProductDto) {
-    return this.productService.create(dto);
-  }
-
-  @ApiOperation({ summary: '更新商品' })
-  @Post(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto) {
-    return this.productService.update(id, dto);
-  }
-
-  @ApiOperation({ summary: '删除商品' })
-  @Post(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.productService.remove(id);
-  }
-
+export class ProductController extends ProductControllerBase {
+  // 可在此处重写接口逻辑，或新增自定义接口
 }

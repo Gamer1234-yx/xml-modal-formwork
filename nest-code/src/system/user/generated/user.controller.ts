@@ -1,0 +1,53 @@
+/**
+ * 用户 Controller（标准接口）
+ * 自动生成 - 来源：user.xml
+ * ⚠️ 此文件每次重新生成都会被覆盖，请勿在此写业务逻辑
+ *    自定义接口逻辑请写在上级目录的 user.controller.ts 中
+ */
+
+import { Controller, Post, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+// 注入自定义 Service（位于上级目录），以确保自定义逻辑生效
+import { UserService } from '../user.service';
+import { UserEntity } from './user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+// 导入可复用的参数类型和返回类型
+import type { ListQuery, DetailQuery, DeleteQuery, UserListReturn, UserDeleteReturn } from './user.types';
+
+@ApiTags('用户')
+@Controller('system/user')
+export class UserControllerBase {
+  constructor(protected readonly userService: UserService) {}
+
+  @ApiOperation({ summary: '查询列表' })
+  @Post('list')
+  async list(@Body() query: ListQuery): Promise<UserListReturn> {
+    return this.userService.findAll(query);
+  }
+
+  @ApiOperation({ summary: '查询详情' })
+  @Post('detail')
+  async detail(@Body() query: DetailQuery): Promise<UserEntity> {
+    return this.userService.findOne(query.id);
+  }
+
+  @ApiOperation({ summary: '新建' })
+  @Post('create')
+  async create(@Body() dto: CreateUserDto): Promise<UserEntity> {
+    return this.userService.create(dto);
+  }
+
+  @ApiOperation({ summary: '更新' })
+  @Post('update')
+  async update(@Body() dto: UpdateUserDto & { id: number }): Promise<UserEntity> {
+    return this.userService.update(dto.id, dto);
+  }
+
+  @ApiOperation({ summary: '删除' })
+  @Post('delete')
+  async delete(@Body() query: DeleteQuery): Promise<UserDeleteReturn> {
+    return this.userService.remove(query.id);
+  }
+
+}

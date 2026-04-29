@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<modal name="Product" label="商品" type="table" module="shop">
+<modal name="Product" label="商品" type="table" module="shop" returnType="IProduct">
   <description>商品管理模块，主要用于展示商品列表及商品信息录入</description>
 
   <fields>
@@ -56,11 +56,63 @@
   <table pagination="true" pageSize="10" sortable="true" />
   <form layout="grid" cols="2" labelWidth="120px" />
 
+  <!-- API配置：action 作为路径，统一使用 POST 方法 -->
   <api prefix="/api/shop/product">
-    <endpoint action="list"   method="POST"    path="/"        description="查询列表" />
-    <endpoint action="detail" method="POST"    path="/:id"     description="查询详情" />
-    <endpoint action="create" method="POST"   path="/"        description="新建" />
-    <endpoint action="update" method="POST"    path="/:id"     description="更新" />
-    <endpoint action="delete" method="POST" path="/:id"     description="删除" />
+    <!-- 定义可复用的参数类型 -->
+    <type name="ListQuery">
+      <param name="page"     type="number"  default="1" />
+      <param name="pageSize" type="number"  default="10" />
+      <param name="name"     type="string" />
+      <param name="categoryId" type="number" />
+    </type>
+
+    <type name="DetailQuery">
+      <param name="id" type="number" required="true" />
+    </type>
+
+    <type name="DeleteQuery">
+      <param name="id" type="number" required="true" />
+    </type>
+
+    <!--
+      returns 类型说明：
+      - modelName        → 引用当前模型类型（如 Product → IProduct / ProductEntity）
+      - modelName[]      → 数组形式（如 IProduct[] / ProductEntity[]）
+      - 内联 <returns>   → 自定义返回结构
+    -->
+    <endpoint action="list"   method="POST" path="/list"   description="查询商品列表">
+      <param name="query" type="ListQuery" required="true" />
+      <!-- 返回类型：分页列表 -->
+      <returns>
+        <field name="list" type="modelName[]" />
+        <field name="total" type="number" />
+        <field name="page" type="number" />
+        <field name="pageSize" type="number" />
+      </returns>
+    </endpoint>
+
+    <endpoint action="detail" method="POST" path="/detail" description="查询商品详情">
+      <param name="query" type="DetailQuery" required="true" />
+      <returns type="modelName" />
+    </endpoint>
+
+    <endpoint action="create" method="POST" path="/create" description="新建商品">
+      <param name="body" type="CreateDto" required="true" />
+      <returns type="modelName" />
+    </endpoint>
+
+    <endpoint action="update" method="POST" path="/update" description="更新商品">
+      <param name="id"   type="number" required="true" />
+      <param name="body" type="UpdateDto" required="true" />
+      <returns type="modelName" />
+    </endpoint>
+
+    <endpoint action="delete" method="POST" path="/delete" description="删除商品">
+      <param name="query" type="DeleteQuery" required="true" />
+      <!-- 返回类型：删除结果 -->
+      <returns>
+        <field name="message" type="string" />
+      </returns>
+    </endpoint>
   </api>
 </modal>

@@ -33,13 +33,27 @@ class ModalGenControl {
 
     // 生成前端代码
     const vueOutput = this.vueGen.generate(schema);
-    const vueDir = this.writer.writeVueFiles(schema, vueOutput, VUE_ROOT);
+    const vueResult = this.writer.writeVueFiles(schema, vueOutput, VUE_ROOT);
+    const vueDir = vueResult.dir;
     console.log(`   ✅ Vue3  → ${path.relative(ROOT, vueDir)}`);
+    if (vueResult.apiCreated) {
+      console.log(`   📝 已创建自定义 API 文件，可在此写自定义请求逻辑`);
+    }
 
     // 生成后端代码
     const nestOutput = this.nestGen.generate(schema);
-    const nestDir = this.writer.writeNestFiles(schema, nestOutput, NEST_ROOT);
+    const nestResult = this.writer.writeNestFiles(schema, nestOutput, NEST_ROOT);
+    const nestDir = nestResult.dir;
     console.log(`   ✅ NestJS → ${path.relative(ROOT, nestDir)}`);
+    if (nestResult.serviceCreated) {
+      console.log(`   📝 已创建自定义 Service 文件，可在此写自定义业务逻辑`);
+    }
+    if (nestResult.controllerCreated) {
+      console.log(`   📝 已创建自定义 Controller 文件，可在此扩展接口`);
+    }
+    if (nestResult.moduleCreated) {
+      console.log(`   📝 已创建自定义 Module 文件，可在此自定义模块配置`);
+    }
 
     return { schema, vueDir, nestDir };
   }

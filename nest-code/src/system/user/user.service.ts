@@ -1,56 +1,30 @@
 /**
- * 用户 Service
- * 自动生成 - 来源：user.xml
+ * 用户 Service（自定义业务逻辑）
+ * 此文件不会被生成器覆盖，请在此处编写自定义查询逻辑
+ *
+ * 使用方式：
+ *   1. 直接重写基类方法（会完全替换基类逻辑）
+ *   2. 调用 super.xxx() 复用基类逻辑，再追加自定义处理
+ *   3. 新增完全自定义的方法
+ *
+ * 示例：
+ *   async findAll(query?: Record<string, any>) {
+ *     // 自定义：追加权限过滤、联表查询等
+ *     return super.findAll(query);
+ *   }
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
-import { UserEntity } from './user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Injectable } from '@nestjs/common';
+import { UserServiceBase } from './generated/user.service';
+import { CreateUserDto } from './generated/dto/create-user.dto';
+import { UpdateUserDto } from './generated/dto/update-user.dto';
 
 @Injectable()
-export class UserService {
-  constructor(
-    @InjectRepository(UserEntity)
-    private readonly repo: Repository<UserEntity>,
-  ) {}
-
-  async findAll(query: Record<string, any> = {}) {
-    const { page = 1, pageSize = 20, ...filters } = query;
-    const where: any = {};
-    if (filters.username !== undefined) where.username = Like(`%${filters.username}%`);
-    if (filters.email !== undefined) where.email = Like(`%${filters.email}%`);
-    const [list, total] = await this.repo.findAndCount({
-      where,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      order: { id: 'DESC' },
-    });
-    return { list, total, page: +page, pageSize: +pageSize };
-  }
-
-  async findOne(id: number) {
-    const record = await this.repo.findOne({ where: { id } });
-    if (!record) throw new NotFoundException(`用户 id=${id} 不存在`);
-    return record;
-  }
-
-  async create(dto: CreateUserDto) {
-    const entity = this.repo.create(dto);
-    return this.repo.save(entity);
-  }
-
-  async update(id: number, dto: UpdateUserDto) {
-    await this.findOne(id);
-    await this.repo.update(id, dto as any);
-    return this.findOne(id);
-  }
-
-  async remove(id: number) {
-    await this.findOne(id);
-    await this.repo.delete(id);
-    return { message: '删除成功' };
-  }
+export class UserService extends UserServiceBase {
+  // 可在此处重写或扩展业务逻辑
+  // 示例：自定义查询逻辑
+  // async findAll(query?: Record<string, any>) {
+  //   // 在这里加自定义过滤逻辑
+  //   return super.findAll(query);
+  // }
 }

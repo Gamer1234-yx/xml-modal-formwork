@@ -1,18 +1,18 @@
 /**
- * 商品 Module
- * 自动生成 - 来源：product.xml
+ * 商品 Module（自定义模块配置）
+ * 此文件不会被生成器覆盖，请在此处自定义模块注册
+ *
+ * 使用方式：
+ *   1. 在 config 中添加 imports / providers / controllers / exports
+ *   2. 导入其他模块
+ *   3. 注册自定义 Provider
  */
 
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProductEntity } from './product.entity';
-import { ProductService } from './product.service';
-import { ProductController } from './product.controller';
+import { PRODUCT_MODULE_BASE_CONFIG, ProductModuleBase } from './generated/product.module';
 
-@Module({
-  imports: [TypeOrmModule.forFeature([ProductEntity])],
-  controllers: [ProductController],
-  providers: [ProductService],
-  exports: [ProductService],
-})
+// 自定义：可在此处添加更多 imports / providers
+const config = { ...PRODUCT_MODULE_BASE_CONFIG };
+
+@Module(config)
 export class ProductModule {}

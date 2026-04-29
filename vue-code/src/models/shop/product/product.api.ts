@@ -1,38 +1,24 @@
 /**
- * 商品 API 服务
- * 自动生成 - 来源：product.xml
+ * 商品 API Service（自定义请求逻辑）
+ * 此文件不会被生成器覆盖，请在此处编写自定义请求逻辑
+ *
+ * 使用方式：
+ *   1. 重写方法：完全替换默认请求逻辑
+ *   2. 调用 super.xxx()：复用默认逻辑，再追加处理
+ *   3. 新增方法：添加完全自定义的接口调用
  */
 
-import request from '@/utils/request';
-import type { IProduct } from './Product.model';
+import { ProductApiBase } from './generated/product.api';
+import type { IProduct } from './generated/product.model';
 
-const BASE_URL = '/api/shop/product';
+class ProductApi extends ProductApiBase {
+  // 可在此处重写或扩展接口调用逻辑
+  // 示例：
+  // async list(params?: Record<string, any>) {
+  //   // 自定义请求逻辑
+  //   return super.list(params);
+  // }
+}
 
-export const ProductApi = {
-  /** 查询列表 */
-  list(params?: Record<string, any>) {
-    return request.post<{ list: IProduct[]; total: number }>(BASE_URL, params);
-  },
-
-  /** 查询详情 */
-  detail(id: number | string, data?: any) {
-    return request.post<IProduct>(`${BASE_URL}/${id}`, data);
-  },
-
-  /** 新建 */
-  create(data: Partial<IProduct>) {
-    return request.post<IProduct>(BASE_URL, data);
-  },
-
-  /** 更新 */
-  update(id: number | string, data: Partial<IProduct>) {
-    return request.post<IProduct>(`${BASE_URL}/${id}`, data);
-  },
-
-  /** 删除 */
-  remove(id: number | string, data?: any) {
-    return request.post(`${BASE_URL}/${id}`, data);
-  },
-};
-
-export default ProductApi;
+const productApi = new ProductApi();
+export default productApi;

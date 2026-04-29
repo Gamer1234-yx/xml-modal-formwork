@@ -1,47 +1,20 @@
 /**
- * 用户 Controller
- * 自动生成 - 来源：user.xml
+ * 用户 Controller（自定义接口逻辑）
+ * 此文件不会被生成器覆盖，请在此处编写自定义接口逻辑
+ *
+ * 使用方式：
+ *   1. 直接重写基类接口方法
+ *   2. 新增自定义接口（记得加 @Get/@Post 等装饰器）
  */
 
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Controller, ParseIntPipe } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { UserControllerBase } from './generated/user.controller';
+import { CreateUserDto } from './generated/dto/create-user.dto';
+import { UpdateUserDto } from './generated/dto/update-user.dto';
 
 @ApiTags('用户')
 @Controller('system/user')
-export class UserController {
-  constructor(private readonly userService: UserService) {}
-
-  @ApiOperation({ summary: '查询用户列表' })
-  @Post()
-  findAll(@Query() query: Record<string, any>) {
-    return this.userService.findAll(query);
-  }
-
-  @ApiOperation({ summary: '查询用户详情' })
-  @Post(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.findOne(id);
-  }
-
-  @ApiOperation({ summary: '新建用户' })
-  @Post()
-  create(@Body() dto: CreateUserDto) {
-    return this.userService.create(dto);
-  }
-
-  @ApiOperation({ summary: '更新用户' })
-  @Post(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
-    return this.userService.update(id, dto);
-  }
-
-  @ApiOperation({ summary: '删除用户' })
-  @Post(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.remove(id);
-  }
-
+export class UserController extends UserControllerBase {
+  // 可在此处重写接口逻辑，或新增自定义接口
 }

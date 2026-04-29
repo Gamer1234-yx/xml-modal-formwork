@@ -1,38 +1,24 @@
 /**
- * 用户 API 服务
- * 自动生成 - 来源：user.xml
+ * 用户 API Service（自定义请求逻辑）
+ * 此文件不会被生成器覆盖，请在此处编写自定义请求逻辑
+ *
+ * 使用方式：
+ *   1. 重写方法：完全替换默认请求逻辑
+ *   2. 调用 super.xxx()：复用默认逻辑，再追加处理
+ *   3. 新增方法：添加完全自定义的接口调用
  */
 
-import request from '@/utils/request';
-import type { IUser } from './User.model';
+import { UserApiBase } from './generated/user.api';
+import type { IUser } from './generated/user.model';
 
-const BASE_URL = '/api/system/user';
+class UserApi extends UserApiBase {
+  // 可在此处重写或扩展接口调用逻辑
+  // 示例：
+  // async list(params?: Record<string, any>) {
+  //   // 自定义请求逻辑
+  //   return super.list(params);
+  // }
+}
 
-export const UserApi = {
-  /** 查询列表 */
-  list(params?: Record<string, any>) {
-    return request.post<{ list: IUser[]; total: number }>(BASE_URL, params);
-  },
-
-  /** 查询详情 */
-  detail(id: number | string, data?: any) {
-    return request.post<IUser>(`${BASE_URL}/${id}`, data);
-  },
-
-  /** 新建 */
-  create(data: Partial<IUser>) {
-    return request.post<IUser>(BASE_URL, data);
-  },
-
-  /** 更新 */
-  update(id: number | string, data: Partial<IUser>) {
-    return request.post<IUser>(`${BASE_URL}/${id}`, data);
-  },
-
-  /** 删除 */
-  remove(id: number | string, data?: any) {
-    return request.post(`${BASE_URL}/${id}`, data);
-  },
-};
-
-export default UserApi;
+const userApi = new UserApi();
+export default userApi;

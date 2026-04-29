@@ -1,4 +1,4 @@
-export * from './user.model';
-export * from './user.form';
-export * from './user.table';
+export * from './generated/user.model';
+export * from './generated/user.form';
+export * from './generated/user.table';
 export { default as UserApi } from './user.api';

@@ -110,8 +110,74 @@ class XmlParser {
     if (raw.api && raw.api[0]) {
       const apiNode = raw.api[0];
       schema.api.prefix = this._attr(apiNode).prefix || '';
+      
+      // 解析 <type> 定义（可复用的参数类型）
+      schema.api.types = [];
+      if (apiNode.type) {
+        schema.api.types = apiNode.type.map(t => {
+          const typeDef = this._attr(t);
+          typeDef.params = [];
+          if (t.param) {
+            typeDef.params = t.param.map(p => this._attr(p));
+          }
+          return typeDef;
+        });
+      }
+      
+      // 解析 <endpoint> 定义
       if (apiNode.endpoint) {
-        schema.api.endpoints = apiNode.endpoint.map(e => this._attr(e));
+        schema.api.endpoints = apiNode.endpoint.map(e => {
+          const endpoint = this._attr(e);
+          // 解析 endpoint 下的 <param> 标签（请求参数）
+          endpoint.params = [];
+          if (e.param) {
+            endpoint.params = e.param.map(p => this._attr(p));
+          }
+          
+          // 解析 endpoint 的 returns 属性（简单返回类型）
+          // 例如：<endpoint action="list" returns="IUser[]" ... />
+          endpoint.returns = endpoint.returns || null;
+
+          // 解析 endpoint 下的 <returns> 标签（复杂返回类型定义）
+          // 支持两种方式：
+          //   1. <returns type="IUser[]" />  - 引用类型
+          //   2. <returns> <field name="list" type="IUser[]" /> ... </returns> - 内联定义
+          //   3. 关键字：returnType → 引用 schema.returnType（如 IUser）
+          //              returnType[] → 数组形式（如 IUser[]）
+          if (e.returns) {
+            const returnsNode = e.returns[0];
+            const returnsAttr = this._attr(returnsNode);
+
+            let rawType = null;
+            if (returnsAttr.type) {
+              // 方式1：<returns type="..." />
+              rawType = returnsAttr.type;
+            } else if (returnsNode.field) {
+              // 方式2：内联定义返回结构
+              const fields = returnsNode.field.map(f => this._attr(f));
+              // 将字段中的 modelName / modelName[] 替换为实际类型（schema.name）
+              fields.forEach(f => {
+                if (f.type === 'modelName') f.type = schema.name;
+                else if (f.type === 'modelName[]') f.type = `${schema.name}[]`;
+              });
+              endpoint.returns = { type: 'object', fields };
+            } else {
+              // 如果没有 type 也没有 field，可能是简单文本
+              rawType = this._text(returnsNode) || endpoint.returns;
+            }
+
+            // 替换关键字 modelName / modelName[]
+            if (rawType === 'modelName') {
+              endpoint.returns = schema.name;
+            } else if (rawType === 'modelName[]') {
+              endpoint.returns = `${schema.name}[]`;
+            } else if (rawType) {
+              endpoint.returns = rawType;
+            }
+          }
+          
+          return endpoint;
+        });
       }
     }
 

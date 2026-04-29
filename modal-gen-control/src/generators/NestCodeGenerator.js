@@ -1,29 +1,103 @@
 /**
- * NestJS 后端代码生成器
- * 根据 ModalSchema 生成：
- *   1. Entity (TypeORM)
- *   2. DTO (class-validator)
- *   3. Service
- *   4. Controller
- *   5. Module
+ * NestJS 后端代码生成器（generated/ 子目录模式）
+ * 文件结构：
+ *   <module>/<name>/
+ *   ├── generated/          ← 自动生成，每次覆盖
+ *   │   ├── <name>.entity.ts
+ *   │   ├── <name>.service.ts      (类名 <Name>ServiceBase)
+ *   │   ├── <name>.controller.ts   (类名 <Name>ControllerBase)
+ *   │   ├── <name>.module.ts       (类名 <Name>ModuleBase，导出 MODULE_BASE_CONFIG)
+ *   │   └── dto/
+ *   ├── <name>.service.ts   ← 手写业务代码，仅首次创建，继承 <Name>ServiceBase
+ *   ├── <name>.controller.ts ← 手写接口逻辑，仅首次创建，继承 <Name>ControllerBase
+ *   ├── <name>.module.ts    ← 手写模块配置，仅首次创建，可自定义
+ *   └── index.ts
  */
-
 const { toSnakeCase, toPascalCase, toKebabCase } = require('../utils/typeMapper');
 
 class NestCodeGenerator {
   generate(schema) {
     return {
-      entity: this.genEntity(schema),
-      createDto: this.genCreateDto(schema),
-      updateDto: this.genUpdateDto(schema),
-      service: this.genService(schema),
-      controller: this.genController(schema),
-      module: this.genModule(schema),
+      entity:           this.genEntity(schema),
+      createDto:        this.genCreateDto(schema),
+      updateDto:        this.genUpdateDto(schema),
+      types:            this.genTypes(schema),              // generated/types.ts
+      service:          this.genServiceBase(schema),
+      serviceCustom:    this.genServiceCustom(schema),
+      controller:       this.genControllerBase(schema),
+      controllerCustom: this.genControllerCustom(schema),
+      module:           this.genModuleBase(schema),       // generated/<name>.module.ts
+      moduleCustom:     this.genModuleCustom(schema),     // <name>.module.ts（仅首次创建）
     };
   }
 
   // ─────────────────────────────────────────────────────
-  // 1. Entity
+  // 1b. Types（可复用的参数类型 + 返回类型，每次覆盖）
+  // ─────────────────────────────────────────────────────
+  genTypes(schema) {
+    const types = schema.api.types || [];
+    const endpoints = schema.api.endpoints || [];
+    
+    // 收集所有需要生成的返回类型（内联对象类型）
+    const returnTypeAliases = {};
+    
+    for (const ep of endpoints) {
+      const returnType = this._mapReturnsType(ep.returns, toPascalCase(schema.name));
+      // 如果是内联对象类型（以 { 开头），需要生成类型别名
+      if (returnType.startsWith('{')) {
+        const aliasName = `${toPascalCase(schema.name)}${this._toPascalCase(ep.action)}Return`;
+        if (!returnTypeAliases[returnType]) {
+          returnTypeAliases[returnType] = aliasName;
+        }
+      }
+    }
+
+    // 如果没有类型定义和返回类型，不生成文件
+    if (types.length === 0 && Object.keys(returnTypeAliases).length === 0) return '';
+
+    const className = toPascalCase(schema.name);
+    const kebab = toKebabCase(schema.name);
+    const lines = [
+      `/**`,
+      ` * ${schema.label} 可复用的参数类型和返回类型`,
+      ` * 自动生成 - 来源：${schema.sourceFile}`,
+      ` * ⚠️ 此文件每次重新生成都会被覆盖`,
+      ` */`,
+      ``,
+      `import type { ${className}Entity } from './${kebab}.entity';`,
+      ``,
+    ];
+
+    // 生成参数类型
+    for (const typeDef of types) {
+      const typeName = typeDef.name || 'UnnamedType';
+      const pascalName = toPascalCase(typeName);
+      
+      lines.push(`export interface ${pascalName} {`);
+      for (const param of typeDef.params || []) {
+        const isRequired = param.required === 'true';
+        const tsType = this._mapParamType(param.type, className);
+        lines.push(`  ${param.name}${isRequired ? '' : '?'}: ${tsType};`);
+      }
+      lines.push(`}`);
+      lines.push(``);
+    }
+
+    // 生成返回类型别名
+    for (const [typeStr, alias] of Object.entries(returnTypeAliases)) {
+      // typeStr 是多行格式，需要转为单行
+      const singleLine = typeStr.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      lines.push(`export type ${alias} = ${singleLine};`);
+    }
+    if (Object.keys(returnTypeAliases).length > 0) {
+      lines.push(``);
+    }
+
+    return lines.join('\n');
+  }
+
+  // ─────────────────────────────────────────────────────
+  // 1. Entity（每次覆盖，在 generated/ 下）
   // ─────────────────────────────────────────────────────
   genEntity(schema) {
     const className = toPascalCase(schema.name);
@@ -32,6 +106,7 @@ class NestCodeGenerator {
       `/**`,
       ` * ${schema.label} 实体`,
       ` * 自动生成 - 来源：${schema.sourceFile}`,
+      ` * ⚠️ 此文件每次重新生成都会被覆盖，请勿在此写业务逻辑`,
       ` */`,
       ``,
       `import {`,
@@ -55,7 +130,7 @@ class NestCodeGenerator {
         continue;
       }
 
-      const nullable = field.validation.required !== 'true';
+      const nullable   = field.validation.required !== 'true';
       const sqliteType = this._getSqliteType(field.type);
       const colOptions = [`type: '${sqliteType}'`];
 
@@ -72,7 +147,6 @@ class NestCodeGenerator {
       lines.push(``);
     }
 
-    // createdAt / updatedAt
     if (schema.fields.find(f => f.name === 'createdAt')) {
       lines.push(`  /** 创建时间 */`);
       lines.push(`  @CreateDateColumn({ name: 'created_at' })`);
@@ -91,7 +165,7 @@ class NestCodeGenerator {
   }
 
   // ─────────────────────────────────────────────────────
-  // 2. CreateDTO
+  // 2. CreateDTO（每次覆盖，在 generated/ 下）
   // ─────────────────────────────────────────────────────
   genCreateDto(schema) {
     const className = toPascalCase(schema.name);
@@ -100,7 +174,6 @@ class NestCodeGenerator {
 
     for (const field of schema.fields) {
       if (field.primary || field.readonly || field.name === 'createdAt' || field.name === 'updatedAt') continue;
-
       const v = field.validation;
       const decs = [];
 
@@ -111,7 +184,7 @@ class NestCodeGenerator {
         decs.push(`  @IsOptional()`);
       }
 
-      if (field.type === 'string' || field.type === 'password' || field.type === 'textarea' || field.type === 'richtext') {
+      if (['string','password','textarea','richtext'].includes(field.type)) {
         decs.push(`  @IsString()`);
         decorators.add('IsString');
         if (v.minLength) { decs.push(`  @MinLength(${v.minLength})`); decorators.add('MinLength'); }
@@ -121,7 +194,7 @@ class NestCodeGenerator {
         decs.push(`  @IsEmail({}, { message: '${v.message || '邮箱格式不正确'}' })`);
         decorators.add('IsEmail');
       }
-      if (field.type === 'number' || field.type === 'integer') {
+      if (['number','integer'].includes(field.type)) {
         decs.push(`  @IsNumber()`);
         decorators.add('IsNumber');
         if (v.min !== undefined) { decs.push(`  @Min(${v.min})`); decorators.add('Min'); }
@@ -135,7 +208,7 @@ class NestCodeGenerator {
     }
 
     const importDecs = [...decorators].join(', ');
-    const lines = [
+    return [
       `/**`,
       ` * ${schema.label} CreateDTO`,
       ` * 自动生成 - 来源：${schema.sourceFile}`,
@@ -147,12 +220,11 @@ class NestCodeGenerator {
       `export class Create${className}Dto {`,
       ...fieldLines,
       `}`,
-    ];
-    return lines.join('\n');
+    ].join('\n');
   }
 
   // ─────────────────────────────────────────────────────
-  // 3. UpdateDTO
+  // 3. UpdateDTO（每次覆盖，在 generated/ 下）
   // ─────────────────────────────────────────────────────
   genUpdateDto(schema) {
     const className = toPascalCase(schema.name);
@@ -171,164 +243,287 @@ class NestCodeGenerator {
   }
 
   // ─────────────────────────────────────────────────────
-  // 4. Service
+  // 4. Service（标准实现，每次覆盖，在 generated/ 下）
   // ─────────────────────────────────────────────────────
-  genService(schema) {
+  genServiceBase(schema) {
     const className = toPascalCase(schema.name);
     const kebab = toKebabCase(schema.name);
     const camel = schema.name.charAt(0).toLowerCase() + schema.name.slice(1);
 
-    return [
+    const lines = [
       `/**`,
-      ` * ${schema.label} Service`,
+      ` * ${schema.label} Service（标准实现）`,
       ` * 自动生成 - 来源：${schema.sourceFile}`,
+      ` * ⚠️ 此文件每次重新生成都会被覆盖，请勿在此写业务逻辑`,
+      ` *    自定义逻辑请写在上级目录的 ${kebab}.service.ts 中`,
       ` */`,
       ``,
       `import { Injectable, NotFoundException } from '@nestjs/common';`,
       `import { InjectRepository } from '@nestjs/typeorm';`,
-      `import { Repository, Like } from 'typeorm';`,
+      `import { Repository, Like, FindManyOptions } from 'typeorm';`,
       `import { ${className}Entity } from './${kebab}.entity';`,
       `import { Create${className}Dto } from './dto/create-${kebab}.dto';`,
       `import { Update${className}Dto } from './dto/update-${kebab}.dto';`,
       ``,
       `@Injectable()`,
-      `export class ${className}Service {`,
+      `export class ${className}ServiceBase {`,
       `  constructor(`,
       `    @InjectRepository(${className}Entity)`,
-      `    private readonly repo: Repository<${className}Entity>,`,
+      `    protected readonly repo: Repository<${className}Entity>,`,
       `  ) {}`,
       ``,
-      `  async findAll(query: Record<string, any> = {}) {`,
+      `  /**`,
+      `   * 查询列表（支持分页 + 模糊搜索）`,
+      `   * 自定义查询逻辑：在上级目录的 ${kebab}.service.ts 中重写此方法`,
+      `   */`,
+      `  async findAll(query: Record<string, any> = {}): Promise<{ list: ${className}Entity[]; total: number; page: number; pageSize: number }> {`,
       `    const { page = 1, pageSize = 20, ...filters } = query;`,
       `    const where: any = {};`,
-      ...schema.fields.filter(f => f.searchable).map(f =>
-        `    if (filters.${f.name} !== undefined) where.${f.name} = Like(\`%\${filters.${f.name}}%\`);`
-      ),
-      `    const [list, total] = await this.repo.findAndCount({`,
-      `      where,`,
-      `      skip: (page - 1) * pageSize,`,
-      `      take: pageSize,`,
-      `      order: { id: 'DESC' },`,
-      `    });`,
-      `    return { list, total, page: +page, pageSize: +pageSize };`,
-      `  }`,
+    ];
+
+    for (const f of schema.fields.filter(f => f.searchable)) {
+      lines.push(`    if (filters.${f.name} !== undefined && filters.${f.name} !== '') {`);
+      lines.push(`      where.${f.name} = Like(\`%\${filters.${f.name}}%\`);`);
+      lines.push(`    }`);
+    }
+
+    lines.push(`    const [list, total] = await this.repo.findAndCount({`);
+    lines.push(`      where,`);
+    lines.push(`      skip: (page -1) * pageSize,`);
+    lines.push(`      take: pageSize,`);
+    lines.push(`      order: { id: 'DESC' },`);
+    lines.push(`    });`);
+    lines.push(`    return { list, total, page: +page, pageSize: +pageSize };`);
+    lines.push(`  }`);
+    lines.push(``);
+
+    lines.push(`  /** 查询单条记录 */`);
+    lines.push(`  async findOne(id: number): Promise<${className}Entity> {`);
+    lines.push(`    const record = await this.repo.findOne({ where: { id } });`);
+    lines.push(`    if (!record) throw new NotFoundException(\`${schema.label} id=\${id} 不存在\`);`);
+    lines.push(`    return record;`);
+    lines.push(`  }`);
+    lines.push(``);
+
+    lines.push(`  /** 新建记录 */`);
+    lines.push(`  async create(dto: Create${className}Dto): Promise<${className}Entity> {`);
+    lines.push(`    const entity = this.repo.create(dto);`);
+    lines.push(`    return this.repo.save(entity);`);
+    lines.push(`  }`);
+    lines.push(``);
+
+    lines.push(`  /** 更新记录 */`);
+    lines.push(`  async update(id: number, dto: Update${className}Dto): Promise<${className}Entity> {`);
+    lines.push(`    await this.findOne(id);`);
+    lines.push(`    await this.repo.update(id, dto as any);`);
+    lines.push(`    return this.findOne(id);`);
+    lines.push(`  }`);
+    lines.push(``);
+
+    lines.push(`  /** 删除记录 */`);
+    lines.push(`  async remove(id: number): Promise<{ message: string }> {`);
+    lines.push(`    await this.findOne(id);`);
+    lines.push(`    await this.repo.delete(id);`);
+    lines.push(`    return { message: '删除成功' };`);
+    lines.push(`  }`);
+    lines.push(`}`);
+
+    return lines.join('\n');
+  }
+
+  // ─────────────────────────────────────────────────────
+  // 4b. Service CUSTOM（仅首次创建，在 generated/ 上级目录）
+  // ─────────────────────────────────────────────────────
+  genServiceCustom(schema) {
+    const className = toPascalCase(schema.name);
+    const kebab = toKebabCase(schema.name);
+
+    return [
+      `/**`,
+      ` * ${schema.label} Service（自定义业务逻辑）`,
+      ` * 此文件不会被生成器覆盖，请在此处编写自定义查询逻辑`,
+      ` *`,
+      ` * 使用方式：`,
+      ` *   1. 直接重写基类方法（会完全替换基类逻辑）`,
+      ` *   2. 调用 super.xxx() 复用基类逻辑，再追加自定义处理`,
+      ` *   3. 新增完全自定义的方法`,
+      ` *`,
+      ` * 示例：`,
+      ` *   async findAll(query?: Record<string, any>) {`,
+      ` *     // 自定义：追加权限过滤、联表查询等`,
+      ` *     return super.findAll(query);`,
+      ` *   }`,
+      ` */`,
       ``,
-      `  async findOne(id: number) {`,
-      `    const record = await this.repo.findOne({ where: { id } });`,
-      `    if (!record) throw new NotFoundException(\`${schema.label} id=\${id} 不存在\`);`,
-      `    return record;`,
-      `  }`,
+      `import { Injectable } from '@nestjs/common';`,
+      `import { ${className}ServiceBase } from './generated/${kebab}.service';`,
+      `import { Create${className}Dto } from './generated/dto/create-${kebab}.dto';`,
+      `import { Update${className}Dto } from './generated/dto/update-${kebab}.dto';`,
       ``,
-      `  async create(dto: Create${className}Dto) {`,
-      `    const entity = this.repo.create(dto);`,
-      `    return this.repo.save(entity);`,
-      `  }`,
-      ``,
-      `  async update(id: number, dto: Update${className}Dto) {`,
-      `    await this.findOne(id);`,
-      `    await this.repo.update(id, dto as any);`,
-      `    return this.findOne(id);`,
-      `  }`,
-      ``,
-      `  async remove(id: number) {`,
-      `    await this.findOne(id);`,
-      `    await this.repo.delete(id);`,
-      `    return { message: '删除成功' };`,
-      `  }`,
+      `@Injectable()`,
+      `export class ${className}Service extends ${className}ServiceBase {`,
+      `  // 可在此处重写或扩展业务逻辑`,
+      `  // 示例：自定义查询逻辑`,
+      `  // async findAll(query?: Record<string, any>) {`,
+      `  //   // 在这里加自定义过滤逻辑`,
+      `  //   return super.findAll(query);`,
+      `  // }`,
       `}`,
     ].join('\n');
   }
 
   // ─────────────────────────────────────────────────────
-  // 5. Controller（修复：读取 endpoint.method）
+  // 5. Controller（标准接口，每次覆盖，在 generated/ 下）
   // ─────────────────────────────────────────────────────
-  genController(schema) {
+  genControllerBase(schema) {
     const className = toPascalCase(schema.name);
     const kebab = toKebabCase(schema.name);
     const camel = schema.name.charAt(0).toLowerCase() + schema.name.slice(1);
     const prefix = schema.api.prefix.replace(/^\/api\//, '');
 
-    const endpointMap = {};
-    for (const ep of schema.api.endpoints) {
-      endpointMap[ep.action] = ep;
-    }
-
-    const toDec = (method) => {
-      const m = (method || 'GET').toUpperCase();
-      switch (m) {
-        case 'GET': return 'Get';
-        case 'POST': return 'Post';
-        case 'PUT': return 'Put';
-        case 'DELETE': return 'Delete';
-        default: return 'Get';
-      }
-    };
+    // 收集所有需要导入的类型名（参数类型 + 返回类型别名）
+    const allTypeNames = this._getAllTypeNames(schema);
 
     const lines = [
       `/**`,
-      ` * ${schema.label} Controller`,
+      ` * ${schema.label} Controller（标准接口）`,
       ` * 自动生成 - 来源：${schema.sourceFile}`,
+      ` * ⚠️ 此文件每次重新生成都会被覆盖，请勿在此写业务逻辑`,
+      ` *    自定义接口逻辑请写在上级目录的 ${kebab}.controller.ts 中`,
       ` */`,
       ``,
-      `import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';`,
+      `import { Controller, Post, Body, Param, Query, ParseIntPipe } from '@nestjs/common';`,
       `import { ApiTags, ApiOperation } from '@nestjs/swagger';`,
-      `import { ${className}Service } from './${kebab}.service';`,
+      `// 注入自定义 Service（位于上级目录），以确保自定义逻辑生效`,
+      `import { ${className}Service } from '../${kebab}.service';`,
+      `import { ${className}Entity } from './${kebab}.entity';`,
       `import { Create${className}Dto } from './dto/create-${kebab}.dto';`,
       `import { Update${className}Dto } from './dto/update-${kebab}.dto';`,
+      `// 导入可复用的参数类型和返回类型`,
+      allTypeNames.length > 0 ? `import type { ${allTypeNames.join(', ')} } from './${kebab}.types';` : ``,
       ``,
       `@ApiTags('${schema.label}')`,
       `@Controller('${prefix}')`,
-      `export class ${className}Controller {`,
-      `  constructor(private readonly ${camel}Service: ${className}Service) {}`,
+      `export class ${className}ControllerBase {`,
+      `  constructor(protected readonly ${camel}Service: ${className}Service) {}`,
       ``,
     ];
 
-    if (endpointMap.list) {
-      const dec = toDec(endpointMap.list.method);
-      lines.push(`  @ApiOperation({ summary: '查询${schema.label}列表' })`);
-      lines.push(`  @${dec}()`);
-      lines.push(`  findAll(@Query() query: Record<string, any>) {`);
-      lines.push(`    return this.${camel}Service.findAll(query);`);
-      lines.push(`  }`);
-      lines.push(``);
-    }
+    // 遍历所有 endpoint，生成对应路由
+    // 规则：
+    //   1. 统一使用 POST 方法
+    //   2. path 默认为 `/${action}`（如果 XML 未指定 path）
+    //   3. 根据 <param> 定义生成方法签名（支持引用类型）
+    //   4. 根据 <returns> 定义生成返回类型注解
+    for (const ep of schema.api.endpoints) {
+      const action = ep.action;
+      // path 默认为 `/${action}`
+      const path = ep.path || `/${action}`;
+      // 去掉前导斜杠，作为路由参数
+      const routePath = path.replace(/^\//, '');
+      const decArgs = `'${routePath}'`;
 
-    if (endpointMap.detail) {
-      const dec = toDec(endpointMap.detail.method);
-      lines.push(`  @ApiOperation({ summary: '查询${schema.label}详情' })`);
-      lines.push(`  @${dec}(':id')`);
-      lines.push(`  findOne(@Param('id', ParseIntPipe) id: number) {`);
-      lines.push(`    return this.${camel}Service.findOne(id);`);
-      lines.push(`  }`);
-      lines.push(``);
-    }
+      lines.push(`  @ApiOperation({ summary: '${ep.description || action}' })`);
+      lines.push(`  @Post(${decArgs})`);
 
-    if (endpointMap.create) {
-      const dec = toDec(endpointMap.create.method);
-      lines.push(`  @ApiOperation({ summary: '新建${schema.label}' })`);
-      lines.push(`  @${dec}()`);
-      lines.push(`  create(@Body() dto: Create${className}Dto) {`);
-      lines.push(`    return this.${camel}Service.create(dto);`);
-      lines.push(`  }`);
-      lines.push(``);
-    }
+      // 根据 endpoint 的 <returns> 定义生成返回类型
+      // 如果使用类型别名（内联对象类型），从 types.ts 导入
+      let returnType = this._mapReturnsType(ep.returns, className);
+      if (returnType.startsWith('{')) {
+        // 使用类型别名
+        const aliasName = `${className}${this._toPascalCase(action)}Return`;
+        returnType = aliasName;
+      }
+      const returnAnnotation = `Promise<${returnType}>`;
 
-    if (endpointMap.update) {
-      const dec = toDec(endpointMap.update.method);
-      lines.push(`  @ApiOperation({ summary: '更新${schema.label}' })`);
-      lines.push(`  @${dec}(':id')`);
-      lines.push(`  update(@Param('id', ParseIntPipe) id: number, @Body() dto: Update${className}Dto) {`);
-      lines.push(`    return this.${camel}Service.update(id, dto);`);
-      lines.push(`  }`);
-      lines.push(``);
-    }
+      // 根据 endpoint 的 <param> 定义生成方法签名
+      const params = ep.params || [];
+      if (params.length === 0) {
+        // 无参数定义：使用 any
+        lines.push(`  async ${action}(@Body() body: any): ${returnAnnotation} {`);
+        lines.push(`    // TODO: 根据业务逻辑调用 Service`);
+      } else if (params.length === 1 && !params[0].type.includes('Dto') && !params[0].type.includes('Entity')) {
+        // 单个参数且不是 DTO/Entity：可能是引用类型（如 ListQuery）
+        const param = params[0];
+        const paramType = this._mapParamType(param.type, className);
+        const isRequired = param.required === 'true';
+        
+        lines.push(`  async ${action}(@Body() ${param.name}${isRequired ? '' : '?'}: ${paramType}): ${returnAnnotation} {`);
+        
+        // 根据 action 自动调用 Service 方法
+        if (action === 'list' || action === 'findAll' || action === 'query') {
+          lines.push(`    return this.${camel}Service.findAll(${param.name});`);
+        } else if (action === 'detail' || action === 'findOne' || action === 'get') {
+          lines.push(`    return this.${camel}Service.findOne(${param.name}.id);`);
+        } else if (action === 'delete' || action === 'remove') {
+          lines.push(`    return this.${camel}Service.remove(${param.name}.id);`);
+        } else {
+          lines.push(`    // TODO: 自定义逻辑`);
+        }
+      } else {
+        // 有参数定义：生成具体的方法签名
+        // 特殊处理：如果只有一个 param 且类型是 DTO/Entity，直接展开，不嵌套
+        const isDtoParam = params.length === 1 && 
+          (params[0].type === 'CreateDto' || params[0].type === 'UpdateDto' || params[0].type === 'Entity');
+        
+        if (isDtoParam) {
+          // 直接把 body 当作 DTO
+          const dtoType = this._mapParamType(params[0].type, className);
+          lines.push(`  async ${action}(@Body() dto: ${dtoType}): ${returnAnnotation} {`);
+          
+          if (action === 'create' || action === 'add' || action === 'insert') {
+            lines.push(`    return this.${camel}Service.create(dto);`);
+          } else if (action === 'update' || action === 'edit') {
+            // update 需要 id，从 body.id 获取
+            lines.push(`    return this.${camel}Service.update(dto.id, dto);`);
+          }
+      } else {
+        // 多个参数：智能生成方法签名
+        // 规则：如果包含 DTO 类型参数，合并类型；否则嵌套在 body 中
+        const dtoParam = params.find(p => p.type === 'CreateDto' || p.type === 'UpdateDto' || p.type === 'Entity');
+        
+        if (dtoParam) {
+          // 有 DTO 参数：合并类型（DTO & { id?, ... }）
+          const dtoType = this._mapParamType(dtoParam.type, className);
+          const otherParams = params.filter(p => p !== dtoParam).map(p => {
+            const type = this._mapParamType(p.type, className);
+            const isRequired = p.required === 'true';
+            return `${p.name}${isRequired ? '' : '?'}: ${type}`;
+          });
+          
+          const mergedType = otherParams.length > 0 
+            ? `${dtoType} & { ${otherParams.join(', ')} }`
+            : dtoType;
+          
+          lines.push(`  async ${action}(@Body() dto: ${mergedType}): ${returnAnnotation} {`);
+        } else {
+          // 无 DTO 参数：嵌套在 body 对象中
+          const paramSig = params.map(p => {
+            const name = p.name;
+            const type = this._mapParamType(p.type, className);
+            const isRequired = p.required === 'true';
+            return `${name}${isRequired ? '' : '?'}: ${type}`;
+          }).join(', ');
 
-    if (endpointMap.delete) {
-      const dec = toDec(endpointMap.delete.method);
-      lines.push(`  @ApiOperation({ summary: '删除${schema.label}' })`);
-      lines.push(`  @${dec}(':id')`);
-      lines.push(`  remove(@Param('id', ParseIntPipe) id: number) {`);
-      lines.push(`    return this.${camel}Service.remove(id);`);
+          lines.push(`  async ${action}(@Body() body: { ${paramSig} }): ${returnAnnotation} {`);
+        }
+
+        // 根据 action 自动调用 Service 方法
+        if (action === 'list' || action === 'findAll' || action === 'query') {
+          lines.push(`    return this.${camel}Service.findAll(body);`);
+        } else if (action === 'detail' || action === 'findOne' || action === 'get') {
+          lines.push(`    return this.${camel}Service.findOne(body.id);`);
+        } else if (action === 'create' || action === 'add' || action === 'insert') {
+          lines.push(`    return this.${camel}Service.create(dto);`);
+        } else if (action === 'update' || action === 'edit') {
+          lines.push(`    return this.${camel}Service.update(dto.id, dto);`);
+        } else if (action === 'delete' || action === 'remove') {
+          lines.push(`    return this.${camel}Service.remove(body.id);`);
+        } else {
+          lines.push(`    // TODO: 自定义逻辑`);
+        }
+      }
+      }
       lines.push(`  }`);
       lines.push(``);
     }
@@ -338,36 +533,256 @@ class NestCodeGenerator {
   }
 
   // ─────────────────────────────────────────────────────
-  // 6. Module
+  // 5b. Controller CUSTOM（仅首次创建，在 generated/ 上级目录）
   // ─────────────────────────────────────────────────────
-  genModule(schema) {
+  genControllerCustom(schema) {
     const className = toPascalCase(schema.name);
     const kebab = toKebabCase(schema.name);
+    const prefix = schema.api.prefix.replace(/^\/api\//, '');
+
     return [
       `/**`,
-      ` * ${schema.label} Module`,
+      ` * ${schema.label} Controller（自定义接口逻辑）`,
+      ` * 此文件不会被生成器覆盖，请在此处编写自定义接口逻辑`,
+      ` *`,
+      ` * 使用方式：`,
+      ` *   1. 直接重写基类接口方法`,
+      ` *   2. 新增自定义接口（记得加 @Get/@Post 等装饰器）`,
+      ` */`,
+      ``,
+      `import { Controller, ParseIntPipe } from '@nestjs/common';`,
+      `import { ApiTags } from '@nestjs/swagger';`,
+      `import { ${className}ControllerBase } from './generated/${kebab}.controller';`,
+      `import { Create${className}Dto } from './generated/dto/create-${kebab}.dto';`,
+      `import { Update${className}Dto } from './generated/dto/update-${kebab}.dto';`,
+      ``,
+      `@ApiTags('${schema.label}')`,
+      `@Controller('${prefix}')`,
+      `export class ${className}Controller extends ${className}ControllerBase {`,
+      `  // 可在此处重写接口逻辑，或新增自定义接口`,
+      `}`,
+    ].join('\n');
+  }
+
+  // ─────────────────────────────────────────────────────
+  // 6. Module BASE（每次覆盖，在 generated/ 下）
+  //    导出 MODULE_BASE_CONFIG 供自定义模块使用
+  // ─────────────────────────────────────────────────────
+  genModuleBase(schema) {
+    const className = toPascalCase(schema.name);
+    const kebab = toKebabCase(schema.name);
+    const constName = `${className.toUpperCase()}_MODULE_BASE_CONFIG`;
+
+    return [
+      `/**`,
+      ` * ${schema.label} Module（标准实现）`,
       ` * 自动生成 - 来源：${schema.sourceFile}`,
+      ` * ⚠️ 此文件每次重新生成都会被覆盖`,
+      ` *    自定义模块配置请修改上级目录的 ${kebab}.module.ts`,
       ` */`,
       ``,
       `import { Module } from '@nestjs/common';`,
       `import { TypeOrmModule } from '@nestjs/typeorm';`,
       `import { ${className}Entity } from './${kebab}.entity';`,
-      `import { ${className}Service } from './${kebab}.service';`,
-      `import { ${className}Controller } from './${kebab}.controller';`,
+      `import { ${className}Service } from '../${kebab}.service';`,
+      `import { ${className}Controller } from '../${kebab}.controller';`,
       ``,
-      `@Module({`,
+      `export const ${constName} = {`,
       `  imports: [TypeOrmModule.forFeature([${className}Entity])],`,
       `  controllers: [${className}Controller],`,
       `  providers: [${className}Service],`,
       `  exports: [${className}Service],`,
-      `})`,
+      `};`,
+      ``,
+      `@Module(${constName})`,
+      `export class ${className}ModuleBase {}`,
+    ].join('\n');
+  }
+
+  // ─────────────────────────────────────────────────────
+  // 6b. Module CUSTOM（仅首次创建，在 generated/ 上级目录）
+  // ─────────────────────────────────────────────────────
+  genModuleCustom(schema) {
+    const className = toPascalCase(schema.name);
+    const kebab = toKebabCase(schema.name);
+    const constName = `${className.toUpperCase()}_MODULE_BASE_CONFIG`;
+
+    return [
+      `/**`,
+      ` * ${schema.label} Module（自定义模块配置）`,
+      ` * 此文件不会被生成器覆盖，请在此处自定义模块注册`,
+      ` *`,
+      ` * 使用方式：`,
+      ` *   1. 在 config 中添加 imports / providers / controllers / exports`,
+      ` *   2. 导入其他模块`,
+      ` *   3. 注册自定义 Provider`,
+      ` */`,
+      ``,
+      `import { Module } from '@nestjs/common';`,
+      `import { ${constName}, ${className}ModuleBase } from './generated/${kebab}.module';`,
+      ``,
+      `// 自定义：可在此处添加更多 imports / providers`,
+      `const config = { ...${constName} };`,
+      ``,
+      `@Module(config)`,
       `export class ${className}Module {}`,
     ].join('\n');
   }
 
+  // ─────────────────────────────────────────────────────
+  // 工具方法
+  // ─────────────────────────────────────────────────────
+
   /**
-   * 获取 SQLite 列类型（用于 @Column({ type: '...' })）
+   * 将 XML param 的 type 映射为 TypeScript 类型
+   * 支持基础类型、数组类型、复杂类型（如 CreateDto、UpdateDto）、自定义类型
    */
+  _mapParamType(paramType, className) {
+    if (!paramType) return 'any';
+    
+    // 数组类型：number[]、string[] 等
+    if (paramType.endsWith('[]')) {
+      const baseType = paramType.slice(0, -2);
+      const tsBase = this._mapSimpleType(baseType);
+      return `${tsBase}[]`;
+    }
+
+    // 复杂类型：CreateDto、UpdateDto、或实体名
+    if (paramType === 'CreateDto') return `Create${className}Dto`;
+    if (paramType === 'UpdateDto') return `Update${className}Dto`;
+    if (paramType === 'Entity')   return `${className}Entity`;
+
+    // 自定义类型：ListQuery、DetailQuery 等（首字母大写的类型名）
+    if (/^[A-Z]/.test(paramType)) return paramType;
+
+    // 基础类型
+    return this._mapSimpleType(paramType);
+  }
+
+  /**
+   * 将 XML returns 的 type 映射为 TypeScript 返回类型
+   * 支持：
+   *   - Entity → UserEntity
+   *   - Entity[] → UserEntity[]
+   *   - CreateDto → CreateUserDto
+   *   - 基础类型 → string, number, boolean
+   *   - 自定义类型 → ListResult 等
+   *   - 内联对象 → { list: UserEntity[]; total: number }
+   */
+  _mapReturnsType(returns, className) {
+    if (!returns) return 'any';
+    
+    // 如果是对象（内联定义的返回结构）
+    if (typeof returns === 'object' && returns.fields) {
+      const fieldTypes = returns.fields.map(f => {
+        const fieldType = this._mapReturnsType(f.type, className);
+        return `  ${f.name}: ${fieldType};`;
+      });
+      return `{\n${fieldTypes.join('\n')}\n}`;
+    }
+    
+    // 如果是字符串类型定义
+    const returnType = returns;
+    
+    // 数组类型：Entity[]、string[] 等
+    if (returnType.endsWith('[]')) {
+      const baseType = returnType.slice(0, -2);
+      const tsBase = this._mapReturnsType(baseType, className);
+      return `${tsBase}[]`;
+    }
+
+    // 特殊类型映射
+    // modelName 关键字：类型名等于 className 时，映射为 UserEntity
+    if (returnType === className) {
+      return `${className}Entity`;
+    }
+    if (returnType === `${className}[]`) {
+      return `${className}Entity[]`;
+    }
+    // 如果类型名以 I 开头（如 IUser），则映射为 UserEntity
+    if (/^I[A-Z]/.test(returnType)) {
+      const entityName = returnType.slice(1);
+      return `${entityName}Entity`;
+    }
+    if (returnType === 'CreateDto') return `Create${className}Dto`;
+    if (returnType === 'UpdateDto') return `Update${className}Dto`;
+    
+    // 自定义类型或基础类型
+    if (/^[A-Z]/.test(returnType)) return returnType;
+    
+    return this._mapSimpleType(returnType);
+  }
+
+  /**
+   * 从 schema.api.types 中提取所有类型名，生成 import 语句
+   * 例如： "ListQuery, DetailQuery, DeleteQuery"
+   */
+  _getTypeNames(schema) {
+    const types = schema.api.types || [];
+    if (types.length === 0) return '';
+    
+    return types.map(t => {
+      const typeName = t.name || 'UnnamedType';
+      return toPascalCase(typeName);
+    }).join(', ');
+  }
+
+  /**
+   * 收集所有需要导入的类型名（参数类型 + 返回类型别名）
+   * 用于 Controller 和 Service 的 import 语句
+   */
+  _getAllTypeNames(schema) {
+    const typeNames = [];
+    
+    // 1. 添加参数类型
+    const types = schema.api.types || [];
+    for (const t of types) {
+      const typeName = t.name || 'UnnamedType';
+      typeNames.push(toPascalCase(typeName));
+    }
+    
+    // 2. 添加返回类型别名
+    const endpoints = schema.api.endpoints || [];
+    const returnTypeAliases = {};
+    
+    for (const ep of endpoints) {
+      const returnType = this._mapReturnsType(ep.returns, toPascalCase(schema.name));
+      // 如果是内联对象类型（以 { 开头），需要生成类型别名
+      if (returnType.startsWith('{')) {
+        const aliasName = `${toPascalCase(schema.name)}${this._toPascalCase(ep.action)}Return`;
+        if (!returnTypeAliases[returnType]) {
+          returnTypeAliases[returnType] = aliasName;
+        }
+      }
+    }
+    
+    // 添加返回类型别名到类型名列表
+    for (const alias of Object.values(returnTypeAliases)) {
+      typeNames.push(alias);
+    }
+    
+    return typeNames;
+  }
+
+  _mapSimpleType(type) {
+    const map = {
+      'string': 'string',
+      'number': 'number',
+      'integer': 'number',
+      'boolean': 'boolean',
+      'object': 'Record<string, any>',
+      'any': 'any',
+    };
+    return map[type] || 'any';
+  }
+
+  /**
+   * 辅助：将字符串转为 PascalCase
+   */
+  _toPascalCase(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   _getSqliteType(xmlType) {
     const map = {
       string: 'text', number: 'real', integer: 'integer',
@@ -380,7 +795,6 @@ class NestCodeGenerator {
   }
 
   _getTsType(xmlType) {
-    // 不用联合类型，避免 TypeORM 推断为 "Object"
     const map = {
       string: 'string', number: 'number', integer: 'number',
       boolean: 'boolean', email: 'string', password: 'string',

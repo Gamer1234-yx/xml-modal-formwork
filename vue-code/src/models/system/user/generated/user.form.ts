@@ -5,7 +5,6 @@
 
 import type { FormItemRule } from 'element-plus';
 
-// ---- 表单字段定义 ----
 export interface FormFieldConfig {
   prop: string;
   label: string;
@@ -103,7 +102,7 @@ export const UserFormRules: Record<string, FormItemRule[]> = {
   ],
   email: [
     { required: true, message: '请输入有效的邮箱地址', trigger: ['blur', 'change'] },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '请输入有效的邮箱', trigger: 'blur' },
   ],
   phone: [
     { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur' },

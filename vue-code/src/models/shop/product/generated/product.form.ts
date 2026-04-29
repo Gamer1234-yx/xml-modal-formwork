@@ -5,7 +5,6 @@
 
 import type { FormItemRule } from 'element-plus';
 
-// ---- 表单字段定义 ----
 export interface FormFieldConfig {
   prop: string;
   label: string;

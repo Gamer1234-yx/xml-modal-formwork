@@ -1,7 +1,7 @@
 /**
  * 商品 数据模型
  * 自动生成 - 来源：product.xml
- * 请勿手动修改，重新生成会覆盖此文件
+ * ⚠️ 此文件每次重新生成都会被覆盖
  */
 
 export interface IProduct {
@@ -57,7 +57,6 @@ export class ProductModel implements IProduct {
     if (data) Object.assign(this, data);
   }
 
-  /** 转为纯 JSON 对象 */
   toJSON(): IProduct {
     return { ...this };
   }
