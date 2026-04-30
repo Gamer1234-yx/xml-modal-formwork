@@ -13,11 +13,7 @@ export interface ListQuery {
   categoryId?: number;
 }
 
-export interface DetailQuery {
-  id: number;
-}
-
-export interface DeleteQuery {
+export interface IdQuery {
   id: number;
 }
 

@@ -19,8 +19,8 @@ export class UserApiBase {
   }
 
   /** 查询详情 */
-  findOne(id: number): Promise<ApiResponse<IUser>> {
-    return request.post<ApiResponse<IUser>>(`${BASE_URL}/detail`, id);
+  findOne(idQuery: any): Promise<ApiResponse<IUser>> {
+    return request.post<ApiResponse<IUser>>(`${BASE_URL}/detail`, idQuery);
   }
 
   /** 新建 */
@@ -34,8 +34,8 @@ export class UserApiBase {
   }
 
   /** 删除 */
-  remove(id: number): Promise<ApiResponse<UserRemoveReturn>> {
-    return request.post<ApiResponse<UserRemoveReturn>>(`${BASE_URL}/delete`, id);
+  remove(idQuery: any): Promise<ApiResponse<UserRemoveReturn>> {
+    return request.post<ApiResponse<UserRemoveReturn>>(`${BASE_URL}/delete`, idQuery);
   }
 
   /** 自定义方法 */

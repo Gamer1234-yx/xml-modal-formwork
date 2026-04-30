@@ -29,9 +29,9 @@ export class UserServiceBase {
   }
 
   /** 查询单条 */
-  async findOne(id: number): Promise<UserEntity> {
-    const record = await this.repo.findOne({ where: { id } });
-    if (!record) throw new NotFoundException(`用户 id=${id} 不存在`);
+  async findOne(body: Partial<UserEntity>): Promise<UserEntity> {
+    const record = await this.repo.findOne({ where: { id: body.id } });
+    if (!record) throw new NotFoundException(`用户 id=${body.id} 不存在`);
     return record;
   }
 
@@ -43,15 +43,15 @@ export class UserServiceBase {
 
   /** 更新 */
   async update(body: Partial<UserEntity>): Promise<UserEntity> {
-    await this.findOne(body.id);
+    await this.findOne(body);
     await this.repo.update(body.id, body);
-    return this.findOne(body.id);
+    return this.findOne(body);
   }
 
   /** 删除 */
-  async remove(id: number): Promise<{ message: string }> {
-    await this.findOne(id);
-    await this.repo.delete(id);
+  async remove(body: Partial<UserEntity>): Promise<{ message: string }> {
+    await this.findOne(body);
+    await this.repo.delete(body.id);
     return { message: '删除成功' };
   }
 

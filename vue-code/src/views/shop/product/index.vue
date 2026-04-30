@@ -61,7 +61,7 @@ async function handleSubmit(data: Record<string, any>) {
 }
 
 async function handleDelete(row: Record<string, any>) {
-  await productApi.remove(row.id)
+  await productApi.remove({id: row.id})
   ElMessage.success('删除成功')
   tableRef.value?.fetchData()
 }

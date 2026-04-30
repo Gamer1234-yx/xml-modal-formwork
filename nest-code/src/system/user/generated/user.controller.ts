@@ -28,8 +28,8 @@ export class UserControllerBase {
 
   @ApiOperation({ summary: '查询详情' })
   @Post('detail')
-  async findOne(@Body() id: number): Promise<UserEntity> {
-    return this.userService.findOne(id);
+  async findOne(@Body() idQuery: any): Promise<UserEntity> {
+    return this.userService.findOne(idQuery);
   }
 
   @ApiOperation({ summary: '新建' })
@@ -46,8 +46,8 @@ export class UserControllerBase {
 
   @ApiOperation({ summary: '删除' })
   @Post('delete')
-  async remove(@Body() id: number): Promise<UserRemoveReturn> {
-    return this.userService.remove(id);
+  async remove(@Body() idQuery: any): Promise<UserRemoveReturn> {
+    return this.userService.remove(idQuery);
   }
 
   @ApiOperation({ summary: '自定义方法' })

@@ -13,7 +13,7 @@ import { ProductEntity } from './product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 // 导入可复用的参数类型和返回类型
-import type { ListQuery, DetailQuery, DeleteQuery, ProductFindAllReturn, ProductRemoveReturn } from './product.types';
+import type { ListQuery, IdQuery, ProductFindAllReturn, ProductRemoveReturn } from './product.types';
 
 @ApiTags('商品')
 @Controller('shop/product')
@@ -28,8 +28,8 @@ export class ProductControllerBase {
 
   @ApiOperation({ summary: '查询商品详情' })
   @Post('detail')
-  async findOne(@Body() id: number): Promise<ProductEntity> {
-    return this.productService.findOne(id);
+  async findOne(@Body() idQuery: any): Promise<ProductEntity> {
+    return this.productService.findOne(idQuery);
   }
 
   @ApiOperation({ summary: '新建商品' })
@@ -46,8 +46,8 @@ export class ProductControllerBase {
 
   @ApiOperation({ summary: '删除商品' })
   @Post('delete')
-  async remove(@Body() id: number): Promise<ProductRemoveReturn> {
-    return this.productService.remove(id);
+  async remove(@Body() idQuery: any): Promise<ProductRemoveReturn> {
+    return this.productService.remove(idQuery);
   }
 
 }

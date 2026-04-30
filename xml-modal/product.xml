@@ -70,11 +70,7 @@
       <param name="categoryId" type="number" />
     </type>
 
-    <type name="DetailQuery">
-      <param name="id" type="number" required="true" />
-    </type>
-
-    <type name="DeleteQuery">
+    <type name="idQuery">
       <param name="id" type="number" required="true" />
     </type>
 
@@ -96,7 +92,7 @@
     </endpoint>
 
     <endpoint action="findOne" method="POST" path="/detail" description="查询商品详情">
-      <param name="id" type="number" required="true" />
+      <param name="idQuery" type="idQuery" required="true" />
       <returns type="modelName" />
     </endpoint>
 
@@ -111,7 +107,7 @@
     </endpoint>
 
     <endpoint action="remove" method="POST" path="/delete" description="删除商品">
-      <param name="id" type="number" required="true" />
+      <param name="idQuery" type="idQuery" required="true" />
       <!-- 返回类型：删除结果 -->
       <returns>
         <field name="message" type="string" />

@@ -8,7 +8,7 @@
 import request from '@/utils/request';
 import type { ApiResponse } from '@/utils/request';
 import type { IProduct } from './product.model';
-import type { ListQuery, DetailQuery, DeleteQuery, ProductFindAllReturn, ProductRemoveReturn } from './product.types';
+import type { ListQuery, IdQuery, ProductFindAllReturn, ProductRemoveReturn } from './product.types';
 
 const BASE_URL = '/shop/product';
 
@@ -19,8 +19,8 @@ export class ProductApiBase {
   }
 
   /** 查询商品详情 */
-  findOne(id: number): Promise<ApiResponse<IProduct>> {
-    return request.post<ApiResponse<IProduct>>(`${BASE_URL}/detail`, id);
+  findOne(idQuery: any): Promise<ApiResponse<IProduct>> {
+    return request.post<ApiResponse<IProduct>>(`${BASE_URL}/detail`, idQuery);
   }
 
   /** 新建商品 */
@@ -34,8 +34,8 @@ export class ProductApiBase {
   }
 
   /** 删除商品 */
-  remove(id: number): Promise<ApiResponse<ProductRemoveReturn>> {
-    return request.post<ApiResponse<ProductRemoveReturn>>(`${BASE_URL}/delete`, id);
+  remove(idQuery: any): Promise<ApiResponse<ProductRemoveReturn>> {
+    return request.post<ApiResponse<ProductRemoveReturn>>(`${BASE_URL}/delete`, idQuery);
   }
 
 }

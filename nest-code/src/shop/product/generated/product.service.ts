@@ -29,9 +29,9 @@ export class ProductServiceBase {
   }
 
   /** 查询单条 */
-  async findOne(id: number): Promise<ProductEntity> {
-    const record = await this.repo.findOne({ where: { id } });
-    if (!record) throw new NotFoundException(`商品 id=${id} 不存在`);
+  async findOne(body: Partial<ProductEntity>): Promise<ProductEntity> {
+    const record = await this.repo.findOne({ where: { id: body.id } });
+    if (!record) throw new NotFoundException(`商品 id=${body.id} 不存在`);
     return record;
   }
 
@@ -43,15 +43,15 @@ export class ProductServiceBase {
 
   /** 更新 */
   async update(body: Partial<ProductEntity>): Promise<ProductEntity> {
-    await this.findOne(body.id);
+    await this.findOne(body);
     await this.repo.update(body.id, body);
-    return this.findOne(body.id);
+    return this.findOne(body);
   }
 
   /** 删除 */
-  async remove(id: number): Promise<{ message: string }> {
-    await this.findOne(id);
-    await this.repo.delete(id);
+  async remove(body: Partial<ProductEntity>): Promise<{ message: string }> {
+    await this.findOne(body);
+    await this.repo.delete(body.id);
     return { message: '删除成功' };
   }
 

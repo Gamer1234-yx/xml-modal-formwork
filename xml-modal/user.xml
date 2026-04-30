@@ -70,6 +70,10 @@
   <!-- 表单配置 -->
   <form layout="grid" cols="2" labelWidth="100px" />
 
+  <type name="idQuery">
+    <param name="id" type="number" required="true" />
+  </type>
+
   <!-- API配置：action 作为路径，统一使用 POST 方法 -->
   <api prefix="/api/system/user">
     <!-- 定义可复用的参数类型 -->
@@ -98,7 +102,7 @@
     </endpoint>
 
     <endpoint action="findOne" method="POST" path="/detail" description="查询详情">
-      <param name="id" type="number" required="true" />
+      <param name="idQuery" type="idQuery" required="true" />
       <returns type="modelName" />
     </endpoint>
 
@@ -113,7 +117,7 @@
     </endpoint>
 
     <endpoint action="remove" method="POST" path="/delete" description="删除">
-      <param name="id" type="number" required="true" />
+      <param name="idQuery" type="idQuery" required="true" />
       <!-- 返回类型：删除结果 -->
       <returns>
         <field name="message" type="string" />
