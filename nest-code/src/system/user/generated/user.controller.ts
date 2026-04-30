@@ -6,7 +6,7 @@
  */
 
 import { Controller, Post, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 // 注入自定义 Service（位于上级目录），以确保自定义逻辑生效
 import { UserService } from '../user.service';
 import { UserEntity } from './user.entity';

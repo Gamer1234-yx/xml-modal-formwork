@@ -27,7 +27,7 @@ export const ProductFormFields: FormFieldConfig[] = [
     prop: 'categoryId',
     label: '分类',
     component: 'ElSelect',
-    remoteOptions: { api: '/api/shop/category', labelKey: 'name', valueKey: 'id' },
+    options: [{ value: '类别1', label: '类别1' }, { value: '类别2', label: '类别2' }, { value: '类别3', label: '类别3' }],
   },
   {
     prop: 'price',

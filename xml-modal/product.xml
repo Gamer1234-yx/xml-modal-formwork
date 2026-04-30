@@ -12,7 +12,11 @@
     </field>
 
     <field name="categoryId" label="分类" type="select" tableVisible="true" searchable="true">
-      <remoteOptions api="/api/shop/category" labelKey="name" valueKey="id" />
+      <options>
+        <option value="类别1" label="类别1" />
+        <option value="类别2" label="类别2" />
+        <option value="类别3" label="类别3" />  
+      </options>
       <validation required="true" message="请选择商品分类" />
     </field>
 

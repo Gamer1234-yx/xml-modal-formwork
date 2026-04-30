@@ -420,7 +420,7 @@ class NestCodeGenerator {
       ` */`,
       ``,
       `import { Controller, Post, Body, Param, Query, ParseIntPipe } from '@nestjs/common';`,
-      `import { ApiTags, ApiOperation } from '@nestjs/swagger';`,
+      `import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';`,
       `// 注入自定义 Service（位于上级目录），以确保自定义逻辑生效`,
       `import { ${className}Service } from '../${kebab}.service';`,
       `import { ${className}Entity } from './${kebab}.entity';`,
@@ -615,9 +615,6 @@ class NestCodeGenerator {
     }
 
     // 复杂类型：CreateDto、UpdateDto、Entity、或 modelName
-    if (paramType === 'CreateDto') return `Create${className}Dto`;
-    if (paramType === 'UpdateDto') return `Update${className}Dto`;
-    if (paramType === 'Entity')   return `${className}Entity`;
     if (paramType === 'modelName') return `Partial<${className}Entity>`;
 
     // 自定义类型：ListQuery、DetailQuery 等（首字母大写的类型名）
@@ -672,8 +669,6 @@ class NestCodeGenerator {
       const entityName = returnType.slice(1);
       return `${entityName}Entity`;
     }
-    if (returnType === 'CreateDto') return `Create${className}Dto`;
-    if (returnType === 'UpdateDto') return `Update${className}Dto`;
     
     // 自定义类型或基础类型
     if (/^[A-Z]/.test(returnType)) return returnType;

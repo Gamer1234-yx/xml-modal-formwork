@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import * as dotenv from 'dotenv';
+
+// 加载环境变量
+dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -33,20 +36,28 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Swagger 文档
-  const config = new DocumentBuilder()
-    .setTitle('XML Modal Framework API')
-    .setDescription('XML驱动的全栈业务模型框架 - API文档')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // Swagger 文档（根据环境变量配置）
+  if (process.env.SWAGGER_ENABLED === 'true') {
+    const { SwaggerModule, DocumentBuilder } = await import('@nestjs/swagger');
+    const config = new DocumentBuilder()
+      .setTitle(process.env.SWAGGER_TITLE || 'API Documentation')
+      .setDescription(process.env.SWAGGER_DESCRIPTION || '')
+      .setVersion(process.env.SWAGGER_VERSION || '1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup(process.env.SWAGGER_PATH || 'api/docs', app, document);
+  }
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`\n🚀 服务已启动: http://localhost:${port}`);
-  console.log(`📄 API文档:     http://localhost:${port}/api/docs\n`);
+  
+  let logMessage = `\n🚀 服务已启动: http://localhost:${port}`;
+  if (process.env.SWAGGER_ENABLED === 'true') {
+    logMessage += `\n📄 API文档:     http://localhost:${port}/${process.env.SWAGGER_PATH || 'api/docs'}`;
+  }
+  logMessage += '\n';
+  console.log(logMessage);
 }
 
 bootstrap();

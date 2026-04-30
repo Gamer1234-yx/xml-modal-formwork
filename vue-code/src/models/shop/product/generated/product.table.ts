@@ -24,6 +24,8 @@ export const ProductTableColumns: TableColumnConfig[] = [
     prop: 'categoryId',
     label: '分类',
     sortable: true,
+    tag: true,
+    options: [{ value: '类别1', label: '类别1' }, { value: '类别2', label: '类别2' }, { value: '类别3', label: '类别3' }],
   },
   {
     prop: 'price',
