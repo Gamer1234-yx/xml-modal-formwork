@@ -28,7 +28,7 @@
             <el-descriptions-item label="代码生成">XML Modal Framework</el-descriptions-item>
             <el-descriptions-item label="构建工具">Vite 5.x</el-descriptions-item>
             <el-descriptions-item label="XML定义目录">xml-modal/</el-descriptions-item>
-            <el-descriptions-item label="生成命令">node modal-gen-control/src/cli.js --all</el-descriptions-item>
+            <el-descriptions-item label="数据库">SQLite</el-descriptions-item>
           </el-descriptions>
         </el-card>
       </el-col>
@@ -38,13 +38,28 @@
 
 <script setup lang="ts">
 import { User, Goods, Document, Setting } from '@element-plus/icons-vue'
+import dashboardApi from '@/models/system/dashboard/dashboard.api'
 
-const stats = [
-  { title: '用户总数', value: '128', icon: 'User', color: '#409eff' },
-  { title: '商品总数', value: '56', icon: 'Goods', color: '#67c23a' },
-  { title: '模型定义', value: '2', icon: 'Document', color: '#e6a23c' },
-  { title: '系统模块', value: '4', icon: 'Setting', color: '#f56c6c' },
-]
+import { DashboardModel } from '@/models/system/dashboard/generated/dashboard.model'
+
+const dashboardSummary = reactive<DashboardModel>(new DashboardModel())
+
+async function fetchDashboard() {
+  const res = await dashboardApi.getDashboard()
+  dashboardSummary.userCount.value = res.data.userCount
+  dashboardSummary.productCount.value = res.data.productCount
+  dashboardSummary.modelCount.value = res.data.modelCount ?? dashboardSummary.modelCount.default
+  dashboardSummary.systemModuleCount.value = res.data.systemModuleCount ?? dashboardSummary.systemModuleCount.default
+}
+
+fetchDashboard()
+
+const stats = computed(() => [
+  { title: dashboardSummary.userCount.label, value: dashboardSummary.userCount.value, icon: 'User', color: '#409eff' },   
+  { title: dashboardSummary.productCount.label, value: dashboardSummary.productCount.value, icon: 'Goods', color: '#67c23a' },
+  { title: dashboardSummary.modelCount.label, value: dashboardSummary.modelCount.value, icon: 'Document', color: '#e6a23c' },
+  { title: dashboardSummary.systemModuleCount.label, value: dashboardSummary.systemModuleCount.value, icon: 'Setting', color: '#f56c6c' },
+])
 </script>
 
 <style lang="scss" scoped>

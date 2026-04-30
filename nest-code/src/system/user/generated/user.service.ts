@@ -9,6 +9,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
+// 导入可复用的参数类型和返回类型
+import type { ListQuery, UserFindAllReturn, UserRemoveReturn } from './user.types';
 
 @Injectable()
 export class UserServiceBase {

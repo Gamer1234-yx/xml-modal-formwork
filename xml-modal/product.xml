@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<modal name="Product" label="商品" type="table" module="shop" returnType="IProduct">
+<modal name="Product" label="商品" module="shop" returnType="IProduct">
   <description>商品管理模块，主要用于展示商品列表及商品信息录入</description>
 
   <fields>

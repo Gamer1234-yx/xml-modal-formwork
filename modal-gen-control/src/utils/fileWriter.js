@@ -135,11 +135,59 @@ class FileWriter {
       this.write(path.join(baseDir, `${kebab}.types.ts`), nestOutput.types);
     }
 
-    // ── 上级目录：仅首次创建 ──
-    const serviceCreated    = this.writeIfNotExists(
-      path.join(customDir, `${kebab}.service.ts`),
-      nestOutput.serviceCustom,
-    );
+    // ── 上级目录：仅首次创建，但会更新导入语句 ──
+    const serviceFilePath = path.join(customDir, `${kebab}.service.ts`);
+    let serviceCreated = false;
+    if (fs.existsSync(serviceFilePath)) {
+      // 文件已存在，更新导入语句
+      const existingContent = fs.readFileSync(serviceFilePath, 'utf-8');
+      const newContent = nestOutput.serviceCustom;
+      
+      // 构建类型导入的正则表达式（使用字符串模板）
+      const typeImportRegex = new RegExp(`import type \\{ ([^}]+) \\} from './generated/${kebab}\\.types';`);
+      
+      // 提取新生成的类型导入语句
+      const typeImportMatch = newContent.match(typeImportRegex);
+      if (typeImportMatch) {
+        const newTypeNames = typeImportMatch[1].split(',').map(n => n.trim());
+        
+        // 检查现有文件是否已经有类型导入
+        const existingTypeImportMatch = existingContent.match(typeImportRegex);
+        if (existingTypeImportMatch) {
+          // 已有类型导入，检查是否需要添加新类型
+          const existingTypeNames = existingTypeImportMatch[1].split(',').map(n => n.trim());
+          const missingTypes = newTypeNames.filter(t => !existingTypeNames.includes(t));
+          
+          if (missingTypes.length > 0) {
+            // 添加缺失的类型
+            const updatedTypeNames = [...existingTypeNames, ...missingTypes].join(', ');
+            const updatedContent = existingContent.replace(
+              typeImportRegex,
+              `import type { ${updatedTypeNames} } from './generated/${kebab}.types';`
+            );
+            if (updatedContent !== existingContent) {
+              this.write(serviceFilePath, updatedContent);
+            }
+          }
+        } else {
+          // 没有类型导入，需要添加
+          // 找到最后一个 import 语句的位置
+          const importStatements = existingContent.match(/^(import .+;)$/gm);
+          if (importStatements && importStatements.length > 0) {
+            const lastImportIndex = existingContent.lastIndexOf(importStatements[importStatements.length - 1]);
+            const lastImportEnd = lastImportIndex + importStatements[importStatements.length - 1].length;
+            // 在最后一个 import 后面添加新的类型导入
+            const updatedContent = existingContent.slice(0, lastImportEnd) + `\n// 导入可复用的参数类型和返回类型\nimport type { ${newTypeNames.join(', ')} } from './generated/${kebab}.types';` + existingContent.slice(lastImportEnd);
+            if (updatedContent !== existingContent) {
+              this.write(serviceFilePath, updatedContent);
+            }
+          }
+        }
+      }
+    } else {
+      // 文件不存在，创建新文件
+      serviceCreated = this.writeIfNotExists(serviceFilePath, nestOutput.serviceCustom);
+    }
     const controllerCreated = this.writeIfNotExists(
       path.join(customDir, `${kebab}.controller.ts`),
       nestOutput.controllerCustom,
@@ -150,12 +198,15 @@ class FileWriter {
     );
 
     // index.ts：每次覆盖
-    const indexContent = [
-      `export * from './generated/${kebab}.entity';`,
-      `export * from './${kebab}.service';`,
-      `export * from './${kebab}.controller';`,
-      `export { ${pascal}Module } from './${kebab}.module';`,
-    ].join('\n');
+    const indexLines = [];
+    // 只有当 Entity 存在时才导出
+    if (nestOutput.entity && nestOutput.entity.trim()) {
+      indexLines.push(`export * from './generated/${kebab}.entity';`);
+    }
+    indexLines.push(`export * from './${kebab}.service';`);
+    indexLines.push(`export * from './${kebab}.controller';`);
+    indexLines.push(`export { ${pascal}Module } from './${kebab}.module';`);
+    const indexContent = indexLines.join('\n');
     this.write(path.join(customDir, 'index.ts'), indexContent);
 
     return {

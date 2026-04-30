@@ -18,7 +18,8 @@ import { Injectable } from '@nestjs/common';
 import { UserServiceBase } from './generated/user.service';
 import { CreateUserDto } from './generated/dto/create-user.dto';
 import { UpdateUserDto } from './generated/dto/update-user.dto';
-import { UserEntity } from './generated/user.entity';
+// 导入可复用的参数类型和返回类型
+import type { ListQuery, UserFindAllReturn, UserRemoveReturn } from './generated/user.types';
 
 @Injectable()
 export class UserService extends UserServiceBase {
@@ -28,9 +29,4 @@ export class UserService extends UserServiceBase {
   //   // 在这里加自定义过滤逻辑
   //   return super.findAll(query);
   // }
-  async customUpdate(body: Partial<UserEntity>): Promise<UserEntity> {
-    console.log(body);
-    
-    return body as UserEntity;
-  }
 }

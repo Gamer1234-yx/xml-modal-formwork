@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modal name="dashboard" label="首页" module="system">
+  <description>首页模块</description>
+
+  <fields>
+    <field name="userCount" default="10"  label="用户总数" type="number">
+    </field>
+
+    <field name="productCount" default="0"  label="商品总数">
+    </field>
+
+    <field name="modelCount" default="0"  label="模型定义">
+    </field>
+    <field name="systemModuleCount" default="0"  label="系统模块">
+    </field>
+  </fields>
+
+  <!-- API配置：action 作为路径，统一使用 POST 方法 -->
+  <api prefix="/api/system/dashboard">
+    <!-- 定义可复用的参数类型 -->
+    <type name="DashboardSummary">
+      <param name="userCount" type="number"  default="1" />
+      <param name="productCount" type="number"  default="20" />
+      <param name="modelCount" type="number"  default="1" />
+      <param name="systemModuleCount" type="number"  default="1" />
+    </type>
+
+    <!--
+      returns 类型说明：
+      - modelName        → 引用当前模型类型（如 User → IUser / UserEntity）
+      - modelName[]      → 数组形式（如 IUser[] / UserEntity[]）
+      - 内联 <returns>   → 自定义返回结构
+    -->
+
+    <endpoint action="getDashboard" method="POST" path="/dashboard" description="获取首页数据">
+      <!-- 返回类型：首页数据摘要 -->
+      <returns type="DashboardSummary" />
+    </endpoint>
+  </api>
+</modal>

@@ -4,65 +4,225 @@
  * ⚠️ 此文件每次重新生成都会被覆盖
  */
 
+export interface FieldConfig {
+  name: string;
+  label: string;
+  type: string;
+  value: any;
+  default: any;
+  primary: boolean;
+  hidden: boolean;
+  tableVisible: boolean;
+  searchable: boolean;
+  readonly: boolean;
+  options?: { value: string | number; label: string }[];
+}
+
 export interface IUser {
   /** ID */
-  id?: number;
+  id?: FieldConfig;
   /** 用户名 */
-  username: string;
+  username: FieldConfig;
   /** 昵称 */
-  nickname?: string;
+  nickname?: FieldConfig;
   /** 邮箱 */
-  email: string;
+  email: FieldConfig;
   /** 手机号 */
-  phone?: string;
+  phone?: FieldConfig;
   /** 密码 */
-  password: string;
+  password: FieldConfig;
   /** 性别 */
-  gender?: string | number;
+  gender?: FieldConfig;
   /** 生日 */
-  birthday?: string;
+  birthday?: FieldConfig;
   /** 状态 */
-  status: string | number;
+  status: FieldConfig;
   /** 备注 */
-  remark?: string;
+  remark?: FieldConfig;
   /** 创建时间 */
-  createdAt?: string;
+  createdAt?: FieldConfig;
   /** 更新时间 */
-  updatedAt?: string;
+  updatedAt?: FieldConfig;
 }
 
 export class UserModel implements IUser {
   /** ID */
-  id: number = 0;
+  id: FieldConfig = {
+    name: 'id',
+    label: 'ID',
+    type: 'number',
+    value: 0,
+    default: 0,
+    primary: true,
+    hidden: true,
+    tableVisible: false,
+    searchable: false,
+    readonly: false,
+  };
   /** 用户名 */
-  username: string = '';
+  username: FieldConfig = {
+    name: 'username',
+    label: '用户名',
+    type: 'string',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: true,
+    readonly: false,
+  };
   /** 昵称 */
-  nickname: string = '';
+  nickname: FieldConfig = {
+    name: 'nickname',
+    label: '昵称',
+    type: 'string',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: false,
+  };
   /** 邮箱 */
-  email: string = '';
+  email: FieldConfig = {
+    name: 'email',
+    label: '邮箱',
+    type: 'email',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: true,
+    readonly: false,
+  };
   /** 手机号 */
-  phone: string = '';
+  phone: FieldConfig = {
+    name: 'phone',
+    label: '手机号',
+    type: 'string',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: false,
+  };
   /** 密码 */
-  password: string = '';
+  password: FieldConfig = {
+    name: 'password',
+    label: '密码',
+    type: 'password',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: false,
+    searchable: false,
+    readonly: false,
+  };
   /** 性别 */
-  gender: string | number = '';
+  gender: FieldConfig = {
+    name: 'gender',
+    label: '性别',
+    type: 'select',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: false, options: [{ value: 0, label: '未知' }, { value: 1, label: '男' }, { value: 2, label: '女' }],
+  };
   /** 生日 */
-  birthday: string = '';
+  birthday: FieldConfig = {
+    name: 'birthday',
+    label: '生日',
+    type: 'date',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: false,
+    searchable: false,
+    readonly: false,
+  };
   /** 状态 */
-  status: string | number = '1';
+  status: FieldConfig = {
+    name: 'status',
+    label: '状态',
+    type: 'select',
+    value: '1',
+    default: '1',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: false, options: [{ value: 0, label: '禁用' }, { value: 1, label: '正常' }],
+  };
   /** 备注 */
-  remark: string = '';
+  remark: FieldConfig = {
+    name: 'remark',
+    label: '备注',
+    type: 'textarea',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: false,
+    searchable: false,
+    readonly: false,
+  };
   /** 创建时间 */
-  createdAt: string = '';
+  createdAt: FieldConfig = {
+    name: 'createdAt',
+    label: '创建时间',
+    type: 'datetime',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: true,
+  };
   /** 更新时间 */
-  updatedAt: string = '';
+  updatedAt: FieldConfig = {
+    name: 'updatedAt',
+    label: '更新时间',
+    type: 'datetime',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: true,
+  };
 
   constructor(data?: Partial<IUser>) {
-    if (data) Object.assign(this, data);
+    if (data) {
+      for (const key in data) {
+        const k = key as keyof IUser;
+        if (this[k] && data[k]) {
+          this[k].value = data[k]!.value !== undefined ? data[k]!.value : data[k];
+        }
+      }
+    }
   }
 
-  toJSON(): IUser {
-    return { ...this };
+  toJSON(): Record<string, any> {
+    const result: Record<string, any> = {};
+    const keys = Object.keys(this) as (keyof IUser)[];
+    for (const key of keys) {
+      if (this[key] && typeof this[key] === 'object' && 'value' in this[key]) {
+        result[key] = this[key].value;
+      }
+    }
+    return result;
   }
 }
 

@@ -18,6 +18,8 @@ import { Injectable } from '@nestjs/common';
 import { ProductServiceBase } from './generated/product.service';
 import { CreateProductDto } from './generated/dto/create-product.dto';
 import { UpdateProductDto } from './generated/dto/update-product.dto';
+// 导入可复用的参数类型和返回类型
+import type { ListQuery, IdQuery, ProductFindAllReturn, ProductRemoveReturn } from './generated/product.types';
 
 @Injectable()
 export class ProductService extends ProductServiceBase {

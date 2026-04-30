@@ -32,14 +32,27 @@ class VueCodeGenerator {
       ` * ⚠️ 此文件每次重新生成都会被覆盖`,
       ` */`,
       ``,
+      `export interface FieldConfig {`,
+      `  name: string;`,
+      `  label: string;`,
+      `  type: string;`,
+      `  value: any;`,
+      `  default: any;`,
+      `  primary: boolean;`,
+      `  hidden: boolean;`,
+      `  tableVisible: boolean;`,
+      `  searchable: boolean;`,
+      `  readonly: boolean;`,
+      `  options?: { value: string | number; label: string }[];`,
+      `}`,
+      ``,
       `export interface I${className} {`,
     ];
 
     for (const field of schema.fields) {
-      const tsType = getTsType(field.type);
-      const optional = field.validation.required === 'true' ? '' : '?';
+      const optional = field.validation?.required === 'true' ? '' : '?';
       lines.push(`  /** ${field.label} */`);
-      lines.push(`  ${field.name}${optional}: ${tsType};`);
+      lines.push(`  ${field.name}${optional}: FieldConfig;`);
     }
 
     lines.push(`}`);
@@ -47,19 +60,47 @@ class VueCodeGenerator {
     lines.push(`export class ${className}Model implements I${className} {`);
 
     for (const field of schema.fields) {
-      const tsType = getTsType(field.type);
       const def = this._getDefaultValue(field);
+      const optionsStr = field.options && field.options.length > 0
+        ? `, options: [${field.options.map(o => `{ value: ${o.value === 'true' || o.value === 'false' || !isNaN(o.value) ? o.value : `'${o.value}'`}, label: '${o.label}' }`).join(', ')}]`
+        : '';
+      
       lines.push(`  /** ${field.label} */`);
-      lines.push(`  ${field.name}: ${tsType} = ${def};`);
+      lines.push(`  ${field.name}: FieldConfig = {`);
+      lines.push(`    name: '${field.name}',`);
+      lines.push(`    label: '${field.label}',`);
+      lines.push(`    type: '${field.type}',`);
+      lines.push(`    value: ${def},`);
+      lines.push(`    default: ${def},`);
+      lines.push(`    primary: ${field.primary},`);
+      lines.push(`    hidden: ${field.hidden},`);
+      lines.push(`    tableVisible: ${field.tableVisible},`);
+      lines.push(`    searchable: ${field.searchable},`);
+      lines.push(`    readonly: ${field.readonly}${optionsStr},`);
+      lines.push(`  };`);
     }
 
     lines.push(``);
     lines.push(`  constructor(data?: Partial<I${className}>) {`);
-    lines.push(`    if (data) Object.assign(this, data);`);
+    lines.push(`    if (data) {`);
+    lines.push(`      for (const key in data) {`);
+    lines.push(`        const k = key as keyof I${className};`);
+    lines.push(`        if (this[k] && data[k]) {`);
+    lines.push(`          this[k].value = data[k]!.value !== undefined ? data[k]!.value : data[k];`);
+    lines.push(`        }`);
+    lines.push(`      }`);
+    lines.push(`    }`);
     lines.push(`  }`);
     lines.push(``);
-    lines.push(`  toJSON(): I${className} {`);
-    lines.push(`    return { ...this };`);
+    lines.push(`  toJSON(): Record<string, any> {`);
+    lines.push(`    const result: Record<string, any> = {};`);
+    lines.push(`    const keys = Object.keys(this) as (keyof I${className})[];`);
+    lines.push(`    for (const key of keys) {`);
+    lines.push(`      if (this[key] && typeof this[key] === 'object' && 'value' in this[key]) {`);
+    lines.push(`        result[key] = this[key].value;`);
+    lines.push(`      }`);
+    lines.push(`    }`);
+    lines.push(`    return result;`);
     lines.push(`  }`);
     lines.push(`}`);
     lines.push(``);
@@ -507,9 +548,14 @@ class VueCodeGenerator {
   }
 
   _getDefaultValue(field) {
-    const v = field.validation;
-    if (v && v.default !== undefined) {
-      const d = v.default;
+    // 支持 field.default 和 field.validation.default 两种写法
+    const defaultValue = field.default !== undefined ? field.default : (field.validation?.default);
+    if (defaultValue !== undefined && defaultValue !== '') {
+      const d = defaultValue;
+      // 判断是否为数组或对象（以 [ 或 { 开头）
+      if (d.startsWith('[') || d.startsWith('{')) {
+        return d;
+      }
       if (['number', 'integer'].includes(field.type)) return d;
       if (field.type === 'boolean') return d;
       return `'${d}'`;

@@ -190,6 +190,7 @@ class XmlParser {
       name: attr.name || '',
       label: attr.label || '',
       type: attr.type || 'string',
+      default: attr.default,
       primary: attr.primary === 'true',
       hidden: attr.hidden === 'true',
       tableVisible: attr.tableVisible === 'true',

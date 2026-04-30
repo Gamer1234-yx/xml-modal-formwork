@@ -20,6 +20,8 @@ program
   .option('-f, --file <filename>', '指定生成的XML文件名（相对于xml-modal目录）')
   .option('-w, --watch', '监听模式，自动检测XML变化并重新生成')
   .option('-a, --all', '生成所有XML文件（默认行为）')
+  .option('--vue', '仅生成前端 Vue 代码')
+  .option('--nest', '仅生成后端 NestJS 代码')
   .action(async (options) => {
     const gen = new ModalGenControl();
 
@@ -28,11 +30,18 @@ program
       return;
     }
 
+    const ROOT = path.resolve(__dirname, '../../');
+
     if (options.file) {
-      const ROOT = path.resolve(__dirname, '../../');
       const xmlFile = path.join(ROOT, 'xml-modal', options.file);
       try {
-        await gen.genOne(xmlFile);
+        if (options.vue) {
+          await gen.genVueOnly(xmlFile);
+        } else if (options.nest) {
+          await gen.genNestOnly(xmlFile);
+        } else {
+          await gen.genOne(xmlFile);
+        }
       } catch (e) {
         console.error(`❌ 生成失败: ${e.message}`);
         process.exit(1);
@@ -40,7 +49,13 @@ program
     } else {
       // 默认生成所有
       try {
-        await gen.genAll();
+        if (options.vue) {
+          await gen.genAllVue();
+        } else if (options.nest) {
+          await gen.genAllNest();
+        } else {
+          await gen.genAll();
+        }
       } catch (e) {
         console.error(`❌ 生成失败: ${e.message}`);
         process.exit(1);

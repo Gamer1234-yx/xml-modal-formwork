@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<modal name="User" label="用户" type="form" module="system">
+<modal name="User" label="用户" module="system">
   <description>用户管理模块，包含用户基本信息的表单与表格定义</description>
 
   <fields>

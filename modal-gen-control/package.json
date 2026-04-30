@@ -9,7 +9,9 @@
   "scripts": {
     "gen": "node src/cli.js",
     "gen:all": "node src/cli.js --all",
-    "gen:watch": "node src/cli.js --watch"
+    "gen:watch": "node src/cli.js --watch",
+    "gen:vue": "node src/cli.js --vue",
+    "gen:nest": "node src/cli.js --nest"
   },
   "dependencies": {
     "xml2js": "^0.6.2",

@@ -37,15 +37,18 @@ class NestCodeGenerator {
   genTypes(schema) {
     const types = schema.api.types || [];
     const endpoints = schema.api.endpoints || [];
+    const className = toPascalCase(schema.name);
+    const kebab = toKebabCase(schema.name);
+    const hasPrimary = schema.fields.find(f => f.primary);
     
     // 收集所有需要生成的返回类型（内联对象类型）
     const returnTypeAliases = {};
     
     for (const ep of endpoints) {
-      const returnType = this._mapReturnsType(ep.returns, toPascalCase(schema.name));
+      const returnType = this._mapReturnsType(ep.returns, className);
       // 如果是内联对象类型（以 { 开头），需要生成类型别名
       if (returnType.startsWith('{')) {
-        const aliasName = `${toPascalCase(schema.name)}${this._toPascalCase(ep.action)}Return`;
+        const aliasName = `${className}${this._toPascalCase(ep.action)}Return`;
         if (!returnTypeAliases[returnType]) {
           returnTypeAliases[returnType] = aliasName;
         }
@@ -55,8 +58,6 @@ class NestCodeGenerator {
     // 如果没有类型定义和返回类型，不生成文件
     if (types.length === 0 && Object.keys(returnTypeAliases).length === 0) return '';
 
-    const className = toPascalCase(schema.name);
-    const kebab = toKebabCase(schema.name);
     const lines = [
       `/**`,
       ` * ${schema.label} 可复用的参数类型和返回类型`,
@@ -64,9 +65,13 @@ class NestCodeGenerator {
       ` * ⚠️ 此文件每次重新生成都会被覆盖`,
       ` */`,
       ``,
-      `import type { ${className}Entity } from './${kebab}.entity';`,
-      ``,
     ];
+
+    // 只有当有主键时才导入 Entity
+    if (hasPrimary) {
+      lines.push(`import type { ${className}Entity } from './${kebab}.entity';`);
+      lines.push(``);
+    }
 
     // 生成参数类型
     for (const typeDef of types) {
@@ -76,8 +81,11 @@ class NestCodeGenerator {
       lines.push(`export interface ${pascalName} {`);
       for (const param of typeDef.params || []) {
         const isRequired = param.required === 'true';
+        // 如果有默认值且不是必填，则标记为可选
+        const hasDefault = param.default !== undefined && param.default !== '';
+        const isOptional = !isRequired || hasDefault;
         const tsType = this._mapParamType(param.type, className);
-        lines.push(`  ${param.name}${isRequired ? '' : '?'}: ${tsType};`);
+        lines.push(`  ${param.name}${isOptional ? '?' : ''}: ${tsType};`);
       }
       lines.push(`}`);
       lines.push(``);
@@ -100,6 +108,11 @@ class NestCodeGenerator {
   // 1. Entity（每次覆盖，在 generated/ 下）
   // ─────────────────────────────────────────────────────
   genEntity(schema) {
+    // 如果没有主键字段，不生成 Entity（如 Dashboard 这类纯 API 模块）
+    if (!schema.fields.find(f => f.primary)) {
+      return '';
+    }
+
     const className = toPascalCase(schema.name);
     const tableName = toSnakeCase(schema.name);
     const lines = [
@@ -135,10 +148,23 @@ class NestCodeGenerator {
       const colOptions = [`type: '${sqliteType}'`];
 
       if (nullable) colOptions.push(`nullable: true`);
-      if (field.validation.default !== undefined) {
-        const def = isNaN(field.validation.default)
-          ? `'${field.validation.default}'`
-          : field.validation.default;
+      // 支持 field.default 和 field.validation.default 两种写法
+      const defaultValue = field.default !== undefined ? field.default : field.validation?.default;
+      if (defaultValue !== undefined && defaultValue !== '') {
+        let def;
+        // 判断是否为数组或对象（以 [ 或 { 开头）
+        if (defaultValue.startsWith('[') || defaultValue.startsWith('{')) {
+          def = defaultValue;
+        } else if (!isNaN(defaultValue)) {
+          // 数字类型
+          def = defaultValue;
+        } else if (defaultValue === 'true' || defaultValue === 'false') {
+          // 布尔类型
+          def = defaultValue;
+        } else {
+          // 字符串类型，需要加引号
+          def = `'${defaultValue}'`;
+        }
         colOptions.push(`default: ${def}`);
       }
 
@@ -248,7 +274,9 @@ class NestCodeGenerator {
   genServiceBase(schema) {
     const className = toPascalCase(schema.name);
     const kebab = toKebabCase(schema.name);
-
+    const allTypeNames = this._getAllTypeNames(schema);
+    const hasPrimary = schema.fields.find(f => f.primary);
+    
     const lines = [
       `/**`,
       ` * ${schema.label} Service（标准实现）`,
@@ -257,18 +285,31 @@ class NestCodeGenerator {
       ` *    自定义逻辑请写在上级目录的 ${kebab}.service.ts 中`,
       ` */`,
       ``,
-      `import { Injectable, NotFoundException } from '@nestjs/common';`,
-      `import { InjectRepository } from '@nestjs/typeorm';`,
-      `import { Repository } from 'typeorm';`,
-      `import { ${className}Entity } from './${kebab}.entity';`,
-      ``,
-      `@Injectable()`,
-      `export class ${className}ServiceBase {`,
-      `  constructor(`,
-      `    @InjectRepository(${className}Entity)`,
-      `    protected readonly repo: Repository<${className}Entity>,`,
-      `  ) {}`,
-      ``,
+    ];
+
+    if (hasPrimary) {
+      lines.push(`import { Injectable, NotFoundException } from '@nestjs/common';`);
+      lines.push(`import { InjectRepository } from '@nestjs/typeorm';`);
+      lines.push(`import { Repository } from 'typeorm';`);
+      lines.push(`import { ${className}Entity } from './${kebab}.entity';`);
+    } else {
+      lines.push(`import { Injectable } from '@nestjs/common';`);
+    }
+    lines.push(`// 导入可复用的参数类型和返回类型`);
+    lines.push(allTypeNames.length > 0 ? `import type { ${allTypeNames.join(', ')} } from './${kebab}.types';` : ``);
+    lines.push(``);
+    lines.push(`@Injectable()`);
+    lines.push(`export class ${className}ServiceBase {`);
+    
+    if (hasPrimary) {
+      lines.push(`  constructor(`);
+      lines.push(`    @InjectRepository(${className}Entity)`);
+      lines.push(`    protected readonly repo: Repository<${className}Entity>,`);
+      lines.push(`  ) {}`);
+      lines.push(``);
+    }
+    
+    const findAllLines = [
       `  /** 查询列表 */`,
       `  async findAll(query: any): Promise<any> {`,
       `    const { page = 1, pageSize = 20 } = query || {};`,
@@ -280,6 +321,9 @@ class NestCodeGenerator {
       `    return { list, total, page: +page, pageSize: +pageSize };`,
       `  }`,
       ``,
+    ];
+    
+    const findOneLines = [
       `  /** 查询单条 */`,
       `  async findOne(body: Partial<${className}Entity>): Promise<${className}Entity> {`,
       `    const record = await this.repo.findOne({ where: { id: body.id } });`,
@@ -287,12 +331,18 @@ class NestCodeGenerator {
       `    return record;`,
       `  }`,
       ``,
+    ];
+    
+    const createLines = [
       `  /** 新建 */`,
       `  async create(body: Partial<${className}Entity>): Promise<${className}Entity> {`,
       `    const entity = this.repo.create(body);`,
       `    return this.repo.save(entity);`,
       `  }`,
       ``,
+    ];
+    
+    const updateLines = [
       `  /** 更新 */`,
       `  async update(body: Partial<${className}Entity>): Promise<${className}Entity> {`,
       `    await this.findOne(body);`,
@@ -300,6 +350,9 @@ class NestCodeGenerator {
       `    return this.findOne(body);`,
       `  }`,
       ``,
+    ];
+    
+    const removeLines = [
       `  /** 删除 */`,
       `  async remove(body: Partial<${className}Entity>): Promise<{ message: string }> {`,
       `    await this.findOne(body);`,
@@ -309,8 +362,16 @@ class NestCodeGenerator {
       ``,
     ];
     const hasUseActionList = ['create', 'update', 'remove', 'findOne', 'findAll'];
+
     for (const ep of schema.api.endpoints) {
       const action = ep.action;
+
+      if (hasUseActionList.includes(action)) {
+        // 如果没有主键，不生成标准 CRUD 方法
+        if (!hasPrimary) continue;
+        lines.push(...(eval(`${action}Lines`)));
+        continue;
+      }
 
       let returnType = this._mapReturnsType(ep.returns, className);
       if (returnType.startsWith('{')) {
@@ -364,6 +425,7 @@ class NestCodeGenerator {
   genServiceCustom(schema) {
     const className = toPascalCase(schema.name);
     const kebab = toKebabCase(schema.name);
+    const allTypeNames = this._getAllTypeNames(schema);
 
     return [
       `/**`,
@@ -386,15 +448,13 @@ class NestCodeGenerator {
       `import { ${className}ServiceBase } from './generated/${kebab}.service';`,
       `import { Create${className}Dto } from './generated/dto/create-${kebab}.dto';`,
       `import { Update${className}Dto } from './generated/dto/update-${kebab}.dto';`,
+      `// 导入可复用的参数类型和返回类型`,
+      allTypeNames.length > 0 ? `import type { ${allTypeNames.join(', ')} } from './generated/${kebab}.types';` : ``,
+      
       ``,
       `@Injectable()`,
       `export class ${className}Service extends ${className}ServiceBase {`,
       `  // 可在此处重写或扩展业务逻辑`,
-      `  // 示例：自定义查询逻辑`,
-      `  // async findAll(query?: Record<string, any>) {`,
-      `  //   // 在这里加自定义过滤逻辑`,
-      `  //   return super.findAll(query);`,
-      `  // }`,
       `}`,
     ].join('\n');
   }
@@ -407,6 +467,7 @@ class NestCodeGenerator {
     const kebab = toKebabCase(schema.name);
     const camel = schema.name.charAt(0).toLowerCase() + schema.name.slice(1);
     const prefix = schema.api.prefix.replace(/^\/api\//, '');
+    const hasPrimary = schema.fields.find(f => f.primary);
 
     // 收集所有需要导入的类型名（参数类型 + 返回类型别名）
     const allTypeNames = this._getAllTypeNames(schema);
@@ -423,18 +484,21 @@ class NestCodeGenerator {
       `import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';`,
       `// 注入自定义 Service（位于上级目录），以确保自定义逻辑生效`,
       `import { ${className}Service } from '../${kebab}.service';`,
-      `import { ${className}Entity } from './${kebab}.entity';`,
-      `import { Create${className}Dto } from './dto/create-${kebab}.dto';`,
-      `import { Update${className}Dto } from './dto/update-${kebab}.dto';`,
-      `// 导入可复用的参数类型和返回类型`,
-      allTypeNames.length > 0 ? `import type { ${allTypeNames.join(', ')} } from './${kebab}.types';` : ``,
-      ``,
-      `@ApiTags('${schema.label}')`,
-      `@Controller('${prefix}')`,
-      `export class ${className}ControllerBase {`,
-      `  constructor(protected readonly ${camel}Service: ${className}Service) {}`,
-      ``,
     ];
+
+    if (hasPrimary) {
+      lines.push(`import { ${className}Entity } from './${kebab}.entity';`);
+      lines.push(`import { Create${className}Dto } from './dto/create-${kebab}.dto';`);
+      lines.push(`import { Update${className}Dto } from './dto/update-${kebab}.dto';`);
+    }
+    lines.push(`// 导入可复用的参数类型和返回类型`);
+    lines.push(allTypeNames.length > 0 ? `import type { ${allTypeNames.join(', ')} } from './${kebab}.types';` : ``);
+    lines.push(``);
+    lines.push(`@ApiTags('${schema.label}')`);
+    lines.push(`@Controller('${prefix}')`);
+    lines.push(`export class ${className}ControllerBase {`);
+    lines.push(`  constructor(protected readonly ${camel}Service: ${className}Service) {}`);
+    lines.push(``);
 
     // 遍历所有 endpoint，生成对应路由
     // 规则：
@@ -539,8 +603,9 @@ class NestCodeGenerator {
     const className = toPascalCase(schema.name);
     const kebab = toKebabCase(schema.name);
     const constName = `${className.toUpperCase()}_MODULE_BASE_CONFIG`;
+    const hasPrimary = schema.fields.find(f => f.primary);
 
-    return [
+    const lines = [
       `/**`,
       ` * ${schema.label} Module（标准实现）`,
       ` * 自动生成 - 来源：${schema.sourceFile}`,
@@ -549,21 +614,31 @@ class NestCodeGenerator {
       ` */`,
       ``,
       `import { Module } from '@nestjs/common';`,
-      `import { TypeOrmModule } from '@nestjs/typeorm';`,
-      `import { ${className}Entity } from './${kebab}.entity';`,
-      `import { ${className}Service } from '../${kebab}.service';`,
-      `import { ${className}Controller } from '../${kebab}.controller';`,
-      ``,
-      `export const ${constName} = {`,
-      `  imports: [TypeOrmModule.forFeature([${className}Entity])],`,
-      `  controllers: [${className}Controller],`,
-      `  providers: [${className}Service],`,
-      `  exports: [${className}Service],`,
-      `};`,
-      ``,
-      `@Module(${constName})`,
-      `export class ${className}ModuleBase {}`,
-    ].join('\n');
+    ];
+
+    if (hasPrimary) {
+      lines.push(`import { TypeOrmModule } from '@nestjs/typeorm';`);
+      lines.push(`import { ${className}Entity } from './${kebab}.entity';`);
+    }
+    lines.push(`import { ${className}Service } from '../${kebab}.service';`);
+    lines.push(`import { ${className}Controller } from '../${kebab}.controller';`);
+    lines.push(``);
+    lines.push(`export const ${constName} = {`);
+    
+    if (hasPrimary) {
+      lines.push(`  imports: [TypeOrmModule.forFeature([${className}Entity])],`);
+    } else {
+      lines.push(`  imports: [],`);
+    }
+    lines.push(`  controllers: [${className}Controller],`);
+    lines.push(`  providers: [${className}Service],`);
+    lines.push(`  exports: [${className}Service],`);
+    lines.push(`};`);
+    lines.push(``);
+    lines.push(`@Module(${constName})`);
+    lines.push(`export class ${className}ModuleBase {}`);
+
+    return lines.join('\n');
   }
 
   // ─────────────────────────────────────────────────────
@@ -696,6 +771,7 @@ class NestCodeGenerator {
    */
   _getAllTypeNames(schema) {
     const typeNames = [];
+    const className = toPascalCase(schema.name);
     
     // 1. 添加参数类型
     const types = schema.api.types || [];
@@ -704,24 +780,35 @@ class NestCodeGenerator {
       typeNames.push(toPascalCase(typeName));
     }
     
-    // 2. 添加返回类型别名
+    // 2. 添加返回类型别名和已定义的返回类型
     const endpoints = schema.api.endpoints || [];
     const returnTypeAliases = {};
     
     for (const ep of endpoints) {
-      const returnType = this._mapReturnsType(ep.returns, toPascalCase(schema.name));
+      const returnType = this._mapReturnsType(ep.returns, className);
       // 如果是内联对象类型（以 { 开头），需要生成类型别名
       if (returnType.startsWith('{')) {
-        const aliasName = `${toPascalCase(schema.name)}${this._toPascalCase(ep.action)}Return`;
+        const aliasName = `${className}${this._toPascalCase(ep.action)}Return`;
         if (!returnTypeAliases[returnType]) {
           returnTypeAliases[returnType] = aliasName;
+        }
+      } else if (!returnType.startsWith(className)) {
+        // 如果返回类型是已定义的类型（如 DashboardSummary），且不是当前模型类型
+        // 提取类型名称（处理数组情况）
+        const typeName = returnType.replace(/\[\]/g, '');
+        // 检查是否是简单类型
+        const simpleTypes = ['string', 'number', 'boolean', 'any', 'Record<string, any>'];
+        if (!simpleTypes.includes(typeName) && !typeNames.includes(typeName)) {
+          typeNames.push(typeName);
         }
       }
     }
     
     // 添加返回类型别名到类型名列表
     for (const alias of Object.values(returnTypeAliases)) {
-      typeNames.push(alias);
+      if (!typeNames.includes(alias)) {
+        typeNames.push(alias);
+      }
     }
     
     return typeNames;

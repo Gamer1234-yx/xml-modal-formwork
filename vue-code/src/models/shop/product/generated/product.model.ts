@@ -4,61 +4,210 @@
  * ⚠️ 此文件每次重新生成都会被覆盖
  */
 
+export interface FieldConfig {
+  name: string;
+  label: string;
+  type: string;
+  value: any;
+  default: any;
+  primary: boolean;
+  hidden: boolean;
+  tableVisible: boolean;
+  searchable: boolean;
+  readonly: boolean;
+  options?: { value: string | number; label: string }[];
+}
+
 export interface IProduct {
   /** ID */
-  id?: number;
+  id?: FieldConfig;
   /** 商品名称 */
-  name: string;
+  name: FieldConfig;
   /** 分类 */
-  categoryId: string | number;
+  categoryId: FieldConfig;
   /** 价格(元) */
-  price: number;
+  price: FieldConfig;
   /** 库存 */
-  stock: number;
+  stock: FieldConfig;
   /** SKU编码 */
-  sku?: string;
+  sku?: FieldConfig;
   /** 商品图片 */
-  images?: string[];
+  images?: FieldConfig;
   /** 商品描述 */
-  description?: string;
+  description?: FieldConfig;
   /** 上架状态 */
-  status: string | number;
+  status: FieldConfig;
   /** 排序 */
-  sort?: number;
+  sort?: FieldConfig;
   /** 创建时间 */
-  createdAt?: string;
+  createdAt?: FieldConfig;
 }
 
 export class ProductModel implements IProduct {
   /** ID */
-  id: number = 0;
+  id: FieldConfig = {
+    name: 'id',
+    label: 'ID',
+    type: 'number',
+    value: 0,
+    default: 0,
+    primary: true,
+    hidden: true,
+    tableVisible: false,
+    searchable: false,
+    readonly: false,
+  };
   /** 商品名称 */
-  name: string = '';
+  name: FieldConfig = {
+    name: 'name',
+    label: '商品名称',
+    type: 'string',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: true,
+    readonly: false,
+  };
   /** 分类 */
-  categoryId: string | number = '';
+  categoryId: FieldConfig = {
+    name: 'categoryId',
+    label: '分类',
+    type: 'select',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: true,
+    readonly: false, options: [{ value: '类别1', label: '类别1' }, { value: '类别2', label: '类别2' }, { value: '类别3', label: '类别3' }],
+  };
   /** 价格(元) */
-  price: number = 0;
+  price: FieldConfig = {
+    name: 'price',
+    label: '价格(元)',
+    type: 'number',
+    value: 0,
+    default: 0,
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: false,
+  };
   /** 库存 */
-  stock: number = 0;
+  stock: FieldConfig = {
+    name: 'stock',
+    label: '库存',
+    type: 'number',
+    value: 0,
+    default: 0,
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: false,
+  };
   /** SKU编码 */
-  sku: string = '';
+  sku: FieldConfig = {
+    name: 'sku',
+    label: 'SKU编码',
+    type: 'string',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: true,
+    readonly: false,
+  };
   /** 商品图片 */
-  images: string[] = [];
+  images: FieldConfig = {
+    name: 'images',
+    label: '商品图片',
+    type: 'image-list',
+    value: [],
+    default: [],
+    primary: false,
+    hidden: false,
+    tableVisible: false,
+    searchable: false,
+    readonly: false,
+  };
   /** 商品描述 */
-  description: string = '';
+  description: FieldConfig = {
+    name: 'description',
+    label: '商品描述',
+    type: 'richtext',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: false,
+    searchable: false,
+    readonly: false,
+  };
   /** 上架状态 */
-  status: string | number = '0';
+  status: FieldConfig = {
+    name: 'status',
+    label: '上架状态',
+    type: 'select',
+    value: '0',
+    default: '0',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: false, options: [{ value: 0, label: '下架' }, { value: 1, label: '上架' }],
+  };
   /** 排序 */
-  sort: number = 0;
+  sort: FieldConfig = {
+    name: 'sort',
+    label: '排序',
+    type: 'number',
+    value: 0,
+    default: 0,
+    primary: false,
+    hidden: false,
+    tableVisible: false,
+    searchable: false,
+    readonly: false,
+  };
   /** 创建时间 */
-  createdAt: string = '';
+  createdAt: FieldConfig = {
+    name: 'createdAt',
+    label: '创建时间',
+    type: 'datetime',
+    value: '',
+    default: '',
+    primary: false,
+    hidden: false,
+    tableVisible: true,
+    searchable: false,
+    readonly: true,
+  };
 
   constructor(data?: Partial<IProduct>) {
-    if (data) Object.assign(this, data);
+    if (data) {
+      for (const key in data) {
+        const k = key as keyof IProduct;
+        if (this[k] && data[k]) {
+          this[k].value = data[k]!.value !== undefined ? data[k]!.value : data[k];
+        }
+      }
+    }
   }
 
-  toJSON(): IProduct {
-    return { ...this };
+  toJSON(): Record<string, any> {
+    const result: Record<string, any> = {};
+    const keys = Object.keys(this) as (keyof IProduct)[];
+    for (const key of keys) {
+      if (this[key] && typeof this[key] === 'object' && 'value' in this[key]) {
+        result[key] = this[key].value;
+      }
+    }
+    return result;
   }
 }
 
