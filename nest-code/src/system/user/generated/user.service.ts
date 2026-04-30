@@ -56,7 +56,8 @@ export class UserServiceBase {
   }
 
   /** 自定义方法 */
-  async customUpdate(body: Partial<UserEntity>): Promise<UserEntity | void> {
+  async customUpdate(body: Partial<UserEntity>): Promise<UserEntity> {
     // TODO: 实现 customUpdate 方法的业务逻辑
+    return void 0 as UserEntity
   }
 }

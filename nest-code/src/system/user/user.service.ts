@@ -28,7 +28,9 @@ export class UserService extends UserServiceBase {
   //   // 在这里加自定义过滤逻辑
   //   return super.findAll(query);
   // }
-  async customUpdate(body: Partial<UserEntity>): Promise<UserEntity | void> {
-    return void 0;
+  async customUpdate(body: Partial<UserEntity>): Promise<UserEntity> {
+    console.log(body);
+    
+    return body as UserEntity;
   }
 }

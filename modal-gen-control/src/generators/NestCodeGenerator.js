@@ -318,7 +318,7 @@ class NestCodeGenerator {
         const aliasName = `${className}${this._toPascalCase(action)}Return`;
         returnType = aliasName;
       }
-      const returnAnnotation = `Promise<${returnType} | void>`;
+      const returnAnnotation = `Promise<${returnType}>`;
 
       // 根据 endpoint 的 <param> 定义生成方法签名
       const params = ep.params || [];
@@ -349,6 +349,7 @@ class NestCodeGenerator {
         lines.push(`  /** ${ep.description || action} */`);
         lines.push(`  async ${action}(${paramDef}): ${returnAnnotation} {`);
         lines.push(`    // TODO: 实现 ${action} 方法的业务逻辑`);
+        lines.push(`    return void 0 as ${returnType}`);
         lines.push(`  }`);
       }
     }
@@ -460,7 +461,7 @@ class NestCodeGenerator {
         const aliasName = `${className}${this._toPascalCase(action)}Return`;
         returnType = aliasName;
       }
-      const returnAnnotation = `Promise<${returnType} | void>`;
+      const returnAnnotation = `Promise<${returnType}>`;
 
       // 根据 endpoint 的 <param> 定义生成方法签名
       const params = ep.params || [];

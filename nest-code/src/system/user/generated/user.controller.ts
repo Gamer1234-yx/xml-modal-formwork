@@ -22,37 +22,37 @@ export class UserControllerBase {
 
   @ApiOperation({ summary: '查询列表' })
   @Post('list')
-  async findAll(@Body() query: ListQuery): Promise<UserFindAllReturn | void> {
+  async findAll(@Body() query: ListQuery): Promise<UserFindAllReturn> {
     return this.userService.findAll(query);
   }
 
   @ApiOperation({ summary: '查询详情' })
   @Post('detail')
-  async findOne(@Body() id: number): Promise<UserEntity | void> {
+  async findOne(@Body() id: number): Promise<UserEntity> {
     return this.userService.findOne(id);
   }
 
   @ApiOperation({ summary: '新建' })
   @Post('create')
-  async create(@Body() body: Partial<UserEntity>): Promise<UserEntity | void> {
+  async create(@Body() body: Partial<UserEntity>): Promise<UserEntity> {
     return this.userService.create(body);
   }
 
   @ApiOperation({ summary: '更新' })
   @Post('update')
-  async update(@Body() body: Partial<UserEntity>): Promise<UserEntity | void> {
+  async update(@Body() body: Partial<UserEntity>): Promise<UserEntity> {
     return this.userService.update(body);
   }
 
   @ApiOperation({ summary: '删除' })
   @Post('delete')
-  async remove(@Body() id: number): Promise<UserRemoveReturn | void> {
+  async remove(@Body() id: number): Promise<UserRemoveReturn> {
     return this.userService.remove(id);
   }
 
   @ApiOperation({ summary: '自定义方法' })
   @Post('customUpdate')
-  async customUpdate(@Body() body: Partial<UserEntity>): Promise<UserEntity | void> {
+  async customUpdate(@Body() body: Partial<UserEntity>): Promise<UserEntity> {
     return this.userService.customUpdate(body);
   }
 

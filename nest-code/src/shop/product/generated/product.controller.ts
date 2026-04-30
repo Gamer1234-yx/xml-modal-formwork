@@ -22,31 +22,31 @@ export class ProductControllerBase {
 
   @ApiOperation({ summary: '查询商品列表' })
   @Post('list')
-  async findAll(@Body() query: ListQuery): Promise<ProductFindAllReturn | void> {
+  async findAll(@Body() query: ListQuery): Promise<ProductFindAllReturn> {
     return this.productService.findAll(query);
   }
 
   @ApiOperation({ summary: '查询商品详情' })
   @Post('detail')
-  async findOne(@Body() id: number): Promise<ProductEntity | void> {
+  async findOne(@Body() id: number): Promise<ProductEntity> {
     return this.productService.findOne(id);
   }
 
   @ApiOperation({ summary: '新建商品' })
   @Post('create')
-  async create(@Body() body: Partial<ProductEntity>): Promise<ProductEntity | void> {
+  async create(@Body() body: Partial<ProductEntity>): Promise<ProductEntity> {
     return this.productService.create(body);
   }
 
   @ApiOperation({ summary: '更新商品' })
   @Post('update')
-  async update(@Body() body: Partial<ProductEntity>): Promise<ProductEntity | void> {
+  async update(@Body() body: Partial<ProductEntity>): Promise<ProductEntity> {
     return this.productService.update(body);
   }
 
   @ApiOperation({ summary: '删除商品' })
   @Post('delete')
-  async remove(@Body() id: number): Promise<ProductRemoveReturn | void> {
+  async remove(@Body() id: number): Promise<ProductRemoveReturn> {
     return this.productService.remove(id);
   }
 
