@@ -21,10 +21,10 @@ export interface IProduct {
   sku?: FieldConfig;
   /** 商品图片 */
   images?: FieldConfig;
-  /** 商品描述 */
-  description?: FieldConfig;
   /** 上架状态 */
   status: FieldConfig;
+  /** 商品描述 */
+  description?: FieldConfig;
   /** 排序 */
   sort?: FieldConfig;
   /** 创建时间 */
@@ -66,7 +66,8 @@ export class ProductModel implements IProduct {
     primary: false,
     visible: true,
     searchable: true,
-    readonly: false, options: [{ value: '类别1', label: '类别1' }, { value: '类别2', label: '类别2' }, { value: '类别3', label: '类别3' }],
+    readonly: false,
+    options: [{ value: '类别1', label: '类别1' }, { value: '类别2', label: '类别2' }, { value: '类别3', label: '类别3' }]
   };
   /** 价格(元) */
   price: FieldConfig = {
@@ -116,18 +117,6 @@ export class ProductModel implements IProduct {
     searchable: false,
     readonly: false,
   };
-  /** 商品描述 */
-  description: FieldConfig = {
-    name: 'description',
-    label: '商品描述',
-    type: 'richtext',
-    value: '',
-    default: '',
-    primary: false,
-    visible: false,
-    searchable: false,
-    readonly: false,
-  };
   /** 上架状态 */
   status: FieldConfig = {
     name: 'status',
@@ -138,7 +127,21 @@ export class ProductModel implements IProduct {
     primary: false,
     visible: true,
     searchable: false,
-    readonly: false, options: [{ value: 0, label: '下架' }, { value: 1, label: '上架' }],
+    readonly: false,
+    options: [{ value: 0, label: '下架' }, { value: 1, label: '上架' }]
+  };
+  /** 商品描述 */
+  description: FieldConfig = {
+    name: 'description',
+    label: '商品描述',
+    type: 'textarea',
+    value: '描述',
+    default: '描述',
+    primary: false,
+    visible: true,
+    searchable: false,
+    readonly: false,
+    conditions: [{ name: 'status', value: '1', operator: 'eq', logic: 'or' }, { name: 'categoryId', value: '类别1', operator: 'eq', logic: 'and' }]
   };
   /** 排序 */
   sort: FieldConfig = {

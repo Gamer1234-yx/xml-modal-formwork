@@ -41,15 +41,15 @@ export class CreateProductDto {
   @IsOptional()
   images?: string;
 
+  /** 上架状态 */
+  @IsNotEmpty({ message: '上架状态不能为空' })
+  status: string;
+
   /** 商品描述 */
   @IsOptional()
   @IsString()
   @MaxLength(5000)
   description?: string;
-
-  /** 上架状态 */
-  @IsNotEmpty({ message: '上架状态不能为空' })
-  status: string;
 
   /** 排序 */
   @IsOptional()

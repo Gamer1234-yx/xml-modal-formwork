@@ -39,6 +39,12 @@ export const ProductFormFields: FormFieldConfig[] = [
     options: [{ value: '0', label: '下架' }, { value: '1', label: '上架' }],
   },
   {
+    prop: 'description',
+    label: '商品描述',
+    component: 'ElInput',
+    componentProps: { type: 'textarea', rows: 4 },
+  },
+  {
     prop: 'createdAt',
     label: '创建时间',
     component: 'ElDatePicker',
@@ -66,11 +72,11 @@ export const ProductFormRules: Record<string, FormItemRule[]> = {
   sku: [
     { max: 64, message: '最多64个字符', trigger: 'blur' },
   ],
-  description: [
-    { max: 5000, message: '最多5000个字符', trigger: 'blur' },
-  ],
   status: [
     { required: true, message: '请输入上架状态', trigger: ['blur', 'change'] },
+  ],
+  description: [
+    { max: 5000, message: '最多5000个字符', trigger: 'blur' },
   ],
 };
 

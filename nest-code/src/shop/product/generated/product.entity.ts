@@ -39,13 +39,13 @@ export class ProductEntity {
   @Column({ type: 'text', nullable: true })
   images: string;
 
-  /** 商品描述 */
-  @Column({ type: 'text', nullable: true })
-  description: string;
-
   /** 上架状态 */
   @Column({ type: 'text', default: 0 })
   status: string;
+
+  /** 商品描述 */
+  @Column({ type: 'text', nullable: true, default: '描述' })
+  description: string;
 
   /** 排序 */
   @Column({ type: 'real', nullable: true, default: 0 })

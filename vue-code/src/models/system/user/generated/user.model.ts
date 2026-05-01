@@ -116,7 +116,8 @@ export class UserModel implements IUser {
     primary: false,
     visible: true,
     searchable: false,
-    readonly: false, options: [{ value: 0, label: '未知' }, { value: 1, label: '男' }, { value: 2, label: '女' }],
+    readonly: false,
+    options: [{ value: 0, label: '未知' }, { value: 1, label: '男' }, { value: 2, label: '女' }]
   };
   /** 生日 */
   birthday: FieldConfig = {
@@ -140,7 +141,8 @@ export class UserModel implements IUser {
     primary: false,
     visible: true,
     searchable: false,
-    readonly: false, options: [{ value: 0, label: '禁用' }, { value: 1, label: '正常' }],
+    readonly: false,
+    options: [{ value: 0, label: '禁用' }, { value: 1, label: '正常' }]
   };
   /** 备注 */
   remark: FieldConfig = {

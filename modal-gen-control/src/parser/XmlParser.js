@@ -19,6 +19,7 @@ const xml2js = require('xml2js');
  * @property {Object} validation - 校验规则
  * @property {Array}  options - 选项列表（select类型）
  * @property {Object} remoteOptions - 远程选项配置
+ * @property {Object} condition - 条件显示配置（如 { name: 'status', value: '1', operator: 'eq' }）
  */
 
 /**
@@ -198,6 +199,7 @@ class XmlParser {
       validation: {},
       options: [],
       remoteOptions: null,
+      conditions: [],
     };
 
     // 解析 validation
@@ -213,6 +215,15 @@ class XmlParser {
     // 解析远程 options
     if (fieldNode.remoteOptions && fieldNode.remoteOptions[0]) {
       field.remoteOptions = this._attr(fieldNode.remoteOptions[0]);
+    }
+
+    // 解析 conditions（条件显示，支持多个条件，每个条件可指定与下一个条件的连接方式）
+    if (fieldNode.condition && fieldNode.condition.length > 0) {
+      field.conditions = fieldNode.condition.map((c, index) => {
+        const cond = this._attr(c);
+        cond.logic = cond.logic || (index < fieldNode.condition.length - 1 ? 'or' : undefined);
+        return cond;
+      });
     }
 
     return field;

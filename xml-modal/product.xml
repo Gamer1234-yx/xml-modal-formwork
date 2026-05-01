@@ -36,9 +36,6 @@
       <validation required="false" maxCount="9" maxSize="5120" accept=".jpg,.jpeg,.png,.webp" />
     </field>
 
-    <field name="description" label="商品描述" type="richtext" visible="false">
-      <validation required="false" maxLength="5000" />
-    </field>
 
     <field name="status" label="上架状态" type="select">
       <options>
@@ -46,6 +43,12 @@
         <option value="1" label="上架" />
       </options>
       <validation required="true" default="0" />
+    </field>
+    
+    <field name="description" label="商品描述" default="描述" type="textarea">
+      <condition name="status" value="1" operator="eq"/>
+      <condition name="categoryId" value="类别1" operator="eq" logic="and"/>
+      <validation required="false" maxLength="5000" />
     </field>
 
     <field name="sort" label="排序" type="number" visible="false">

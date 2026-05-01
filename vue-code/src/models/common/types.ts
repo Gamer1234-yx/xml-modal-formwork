@@ -56,4 +56,5 @@ export interface FieldConfig {
   searchable: boolean;
   readonly: boolean;
   options?: { value: string | number; label: string }[];
+  conditions?: { name: string; value: string; operator?: string; logic?: 'and' | 'or' }[];
 }

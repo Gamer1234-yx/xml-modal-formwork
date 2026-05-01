@@ -52,6 +52,9 @@ class VueCodeGenerator {
       const optionsStr = field.options && field.options.length > 0
         ? `, options: [${field.options.map(o => `{ value: ${o.value === 'true' || o.value === 'false' || !isNaN(o.value) ? o.value : `'${o.value}'`}, label: '${o.label}' }`).join(', ')}]`
         : '';
+      const conditionsStr = field.conditions && field.conditions.length > 0
+        ? `, conditions: [${field.conditions.map(c => `{ name: '${c.name}', value: '${c.value}', operator: '${c.operator || 'eq'}'${c.logic ? `, logic: '${c.logic}'` : ''} }`).join(', ')}]`
+        : '';
       
       lines.push(`  /** ${field.label} */`);
       lines.push(`  ${field.name}: FieldConfig = {`);
@@ -63,7 +66,9 @@ class VueCodeGenerator {
       lines.push(`    primary: ${field.primary},`);
       lines.push(`    visible: ${field.visible},`);
       lines.push(`    searchable: ${field.searchable},`);
-      lines.push(`    readonly: ${field.readonly}${optionsStr},`);
+      lines.push(`    readonly: ${field.readonly},`);
+      if (optionsStr) lines.push(`    ${optionsStr.slice(2)}`);
+      if (conditionsStr) lines.push(`    ${conditionsStr.slice(2)}`);
       lines.push(`  };`);
     }
 

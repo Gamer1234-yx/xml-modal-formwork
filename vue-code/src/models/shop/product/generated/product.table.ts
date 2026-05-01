@@ -51,18 +51,18 @@ export const ProductTableColumns: TableColumnConfig[] = [
     sortable: true,
   },
   {
-    prop: 'description',
-    label: '商品描述',
-    visible: false,
-    sortable: true,
-  },
-  {
     prop: 'status',
     label: '上架状态',
     visible: true,
     sortable: true,
     tag: true,
     options: [{ value: '0', label: '下架' }, { value: '1', label: '上架' }],
+  },
+  {
+    prop: 'description',
+    label: '商品描述',
+    visible: true,
+    sortable: true,
   },
   {
     prop: 'sort',
