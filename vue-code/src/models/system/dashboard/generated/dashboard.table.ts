@@ -3,18 +3,29 @@
  * 自动生成 - 来源：dashboard.xml
  */
 
-export interface TableColumnConfig {
-  prop: string;
-  label: string;
-  sortable?: boolean;
-  width?: number | string;
-  minWidth?: number | string;
-  formatter?: string;
-  tag?: boolean;
-  options?: { value: string | number; label: string; type?: string }[];
-}
+import type { TableColumnConfig } from '@/models/common/types';
 
 export const dashboardTableColumns: TableColumnConfig[] = [
+  {
+    prop: 'userCount',
+    label: '用户总数',
+    visible: true,
+  },
+  {
+    prop: 'productCount',
+    label: '商品总数',
+    visible: true,
+  },
+  {
+    prop: 'modelCount',
+    label: '模型定义',
+    visible: true,
+  },
+  {
+    prop: 'systemModuleCount',
+    label: '系统模块',
+    visible: true,
+  },
 ];
 
 // 搜索字段

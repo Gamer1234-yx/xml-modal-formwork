@@ -3,19 +3,7 @@
  * 自动生成 - 来源：product.xml
  */
 
-import type { FormItemRule } from 'element-plus';
-
-export interface FormFieldConfig {
-  prop: string;
-  label: string;
-  component: string;
-  type?: string;
-  readonly?: boolean;
-  hidden?: boolean;
-  options?: { value: string | number; label: string }[];
-  remoteOptions?: { api: string; labelKey: string; valueKey: string };
-  componentProps?: Record<string, any>;
-}
+import type { FormFieldConfig, FormItemRule } from '@/models/common/types';
 
 export const ProductFormFields: FormFieldConfig[] = [
   {
@@ -45,25 +33,10 @@ export const ProductFormFields: FormFieldConfig[] = [
     component: 'ElInput',
   },
   {
-    prop: 'images',
-    label: '商品图片',
-    component: 'ImageListUpload',
-  },
-  {
-    prop: 'description',
-    label: '商品描述',
-    component: 'RichTextEditor',
-  },
-  {
     prop: 'status',
     label: '上架状态',
     component: 'ElSelect',
     options: [{ value: '0', label: '下架' }, { value: '1', label: '上架' }],
-  },
-  {
-    prop: 'sort',
-    label: '排序',
-    component: 'ElInputNumber',
   },
   {
     prop: 'createdAt',

@@ -3,19 +3,7 @@
  * 自动生成 - 来源：user.xml
  */
 
-import type { FormItemRule } from 'element-plus';
-
-export interface FormFieldConfig {
-  prop: string;
-  label: string;
-  component: string;
-  type?: string;
-  readonly?: boolean;
-  hidden?: boolean;
-  options?: { value: string | number; label: string }[];
-  remoteOptions?: { api: string; labelKey: string; valueKey: string };
-  componentProps?: Record<string, any>;
-}
+import type { FormFieldConfig, FormItemRule } from '@/models/common/types';
 
 export const UserFormFields: FormFieldConfig[] = [
   {
@@ -39,34 +27,16 @@ export const UserFormFields: FormFieldConfig[] = [
     component: 'ElInput',
   },
   {
-    prop: 'password',
-    label: '密码',
-    component: 'ElInput',
-    type: 'password',
-  },
-  {
     prop: 'gender',
     label: '性别',
     component: 'ElSelect',
     options: [{ value: '0', label: '未知' }, { value: '1', label: '男' }, { value: '2', label: '女' }],
   },
   {
-    prop: 'birthday',
-    label: '生日',
-    component: 'ElDatePicker',
-    componentProps: { type: 'date', valueFormat: 'YYYY-MM-DD' },
-  },
-  {
     prop: 'status',
     label: '状态',
     component: 'ElSelect',
     options: [{ value: '0', label: '禁用' }, { value: '1', label: '正常' }],
-  },
-  {
-    prop: 'remark',
-    label: '备注',
-    component: 'ElInput',
-    componentProps: { type: 'textarea', rows: 4 },
   },
   {
     prop: 'createdAt',

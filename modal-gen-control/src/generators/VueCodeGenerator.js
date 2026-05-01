@@ -32,19 +32,7 @@ class VueCodeGenerator {
       ` * ⚠️ 此文件每次重新生成都会被覆盖`,
       ` */`,
       ``,
-      `export interface FieldConfig {`,
-      `  name: string;`,
-      `  label: string;`,
-      `  type: string;`,
-      `  value: any;`,
-      `  default: any;`,
-      `  primary: boolean;`,
-      `  hidden: boolean;`,
-      `  tableVisible: boolean;`,
-      `  searchable: boolean;`,
-      `  readonly: boolean;`,
-      `  options?: { value: string | number; label: string }[];`,
-      `}`,
+      `import type { FieldConfig } from '@/models/common/types';`,
       ``,
       `export interface I${className} {`,
     ];
@@ -73,8 +61,7 @@ class VueCodeGenerator {
       lines.push(`    value: ${def},`);
       lines.push(`    default: ${def},`);
       lines.push(`    primary: ${field.primary},`);
-      lines.push(`    hidden: ${field.hidden},`);
-      lines.push(`    tableVisible: ${field.tableVisible},`);
+      lines.push(`    visible: ${field.visible},`);
       lines.push(`    searchable: ${field.searchable},`);
       lines.push(`    readonly: ${field.readonly}${optionsStr},`);
       lines.push(`  };`);
@@ -120,25 +107,13 @@ class VueCodeGenerator {
       ` * 自动生成 - 来源：${schema.sourceFile}`,
       ` */`,
       ``,
-      `import type { FormItemRule } from 'element-plus';`,
-      ``,
-      `export interface FormFieldConfig {`,
-      `  prop: string;`,
-      `  label: string;`,
-      `  component: string;`,
-      `  type?: string;`,
-      `  readonly?: boolean;`,
-      `  hidden?: boolean;`,
-      `  options?: { value: string | number; label: string }[];`,
-      `  remoteOptions?: { api: string; labelKey: string; valueKey: string };`,
-      `  componentProps?: Record<string, any>;`,
-      `}`,
+      `import type { FormFieldConfig, FormItemRule } from '@/models/common/types';`,
       ``,
       `export const ${schema.name}FormFields: FormFieldConfig[] = [`,
     ];
 
     for (const field of schema.fields) {
-      if (field.hidden) continue;
+      if (!field.visible) continue;
       const comp = getFormComponent(field.type);
       lines.push(`  {`);
       lines.push(`    prop: '${field.name}',`);
@@ -211,25 +186,16 @@ class VueCodeGenerator {
       ` * 自动生成 - 来源：${schema.sourceFile}`,
       ` */`,
       ``,
-      `export interface TableColumnConfig {`,
-      `  prop: string;`,
-      `  label: string;`,
-      `  sortable?: boolean;`,
-      `  width?: number | string;`,
-      `  minWidth?: number | string;`,
-      `  formatter?: string;`,
-      `  tag?: boolean;`,
-      `  options?: { value: string | number; label: string; type?: string }[];`,
-      `}`,
+      `import type { TableColumnConfig } from '@/models/common/types';`,
       ``,
       `export const ${schema.name}TableColumns: TableColumnConfig[] = [`,
     ];
 
     for (const field of schema.fields) {
-      if (!field.tableVisible) continue;
       lines.push(`  {`);
       lines.push(`    prop: '${field.name}',`);
       lines.push(`    label: '${field.label}',`);
+      lines.push(`    visible: ${field.visible},`);
       if (schema.table.sortable === 'true') lines.push(`    sortable: true,`);
       if (['datetime', 'date'].includes(field.type)) {
         lines.push(`    formatter: '${field.type}',`);

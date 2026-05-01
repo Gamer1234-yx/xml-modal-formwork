@@ -3,15 +3,15 @@
   <description>商品管理模块，主要用于展示商品列表及商品信息录入</description>
 
   <fields>
-    <field name="id" label="ID" type="number" primary="true" hidden="true">
+    <field name="id" label="ID" type="number" primary="true" visible="false">
       <validation required="false" />
     </field>
 
-    <field name="name" label="商品名称" type="string" tableVisible="true" searchable="true">
+    <field name="name" label="商品名称" type="string" searchable="true">
       <validation required="true" minLength="2" maxLength="100" message="商品名称2-100字" />
     </field>
 
-    <field name="categoryId" label="分类" type="select" tableVisible="true" searchable="true">
+    <field name="categoryId" label="分类" type="select" searchable="true">
       <options>
         <option value="类别1" label="类别1" />
         <option value="类别2" label="类别2" />
@@ -20,27 +20,27 @@
       <validation required="true" message="请选择商品分类" />
     </field>
 
-    <field name="price" label="价格(元)" type="number" tableVisible="true">
+    <field name="price" label="价格(元)" type="number">
       <validation required="true" min="0" max="9999999" precision="2" message="价格须大于0" />
     </field>
 
-    <field name="stock" label="库存" type="number" tableVisible="true">
+    <field name="stock" label="库存" type="number">
       <validation required="true" min="0" integer="true" message="库存须为非负整数" />
     </field>
 
-    <field name="sku" label="SKU编码" type="string" tableVisible="true" searchable="true">
+    <field name="sku" label="SKU编码" type="string" searchable="true">
       <validation required="false" maxLength="64" />
     </field>
 
-    <field name="images" label="商品图片" type="image-list" tableVisible="false">
+    <field name="images" label="商品图片" type="image-list" visible="false">
       <validation required="false" maxCount="9" maxSize="5120" accept=".jpg,.jpeg,.png,.webp" />
     </field>
 
-    <field name="description" label="商品描述" type="richtext" tableVisible="false">
+    <field name="description" label="商品描述" type="richtext" visible="false">
       <validation required="false" maxLength="5000" />
     </field>
 
-    <field name="status" label="上架状态" type="select" tableVisible="true">
+    <field name="status" label="上架状态" type="select">
       <options>
         <option value="0" label="下架" />
         <option value="1" label="上架" />
@@ -48,11 +48,11 @@
       <validation required="true" default="0" />
     </field>
 
-    <field name="sort" label="排序" type="number" tableVisible="false">
+    <field name="sort" label="排序" type="number" visible="false">
       <validation required="false" min="0" integer="true" default="0" />
     </field>
 
-    <field name="createdAt" label="创建时间" type="datetime" tableVisible="true" readonly="true">
+    <field name="createdAt" label="创建时间" type="datetime" readonly="true">
       <validation required="false" />
     </field>
   </fields>

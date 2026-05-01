@@ -13,8 +13,7 @@ const xml2js = require('xml2js');
  * @property {string} label - 中文标签
  * @property {string} type - 字段类型
  * @property {boolean} primary - 是否主键
- * @property {boolean} hidden - 是否隐藏
- * @property {boolean} tableVisible - 表格中是否显示
+ * @property {boolean} visible - 是否显示（默认 true，设置 visible="false" 可隐藏）
  * @property {boolean} searchable - 是否可搜索
  * @property {boolean} readonly - 是否只读
  * @property {Object} validation - 校验规则
@@ -186,14 +185,14 @@ class XmlParser {
 
   _parseField(fieldNode) {
     const attr = this._attr(fieldNode);
+    // 使用 visible 字段表示是否显示，默认显示（visible="true"）
     const field = {
       name: attr.name || '',
       label: attr.label || '',
       type: attr.type || 'string',
       default: attr.default,
       primary: attr.primary === 'true',
-      hidden: attr.hidden === 'true',
-      tableVisible: attr.tableVisible === 'true',
+      visible: attr.visible !== 'false',
       searchable: attr.searchable === 'true',
       readonly: attr.readonly === 'true',
       validation: {},

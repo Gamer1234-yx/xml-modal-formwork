@@ -93,22 +93,12 @@
 import { ref, reactive, watch, nextTick } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { deepClone } from '@/utils'
-
-interface FormField {
-  prop: string
-  label: string
-  component: string
-  type?: string
-  readonly?: boolean
-  span?: number
-  options?: { value: string | number; label: string }[]
-  componentProps?: Record<string, any>
-}
+import { FormFieldConfig } from '@/models/common/types'
 
 const props = defineProps<{
   modelValue: boolean
   title?: string
-  fields: FormField[]
+  fields: FormFieldConfig[]
   rules?: FormRules
   initialData?: Record<string, any>
   width?: string
@@ -135,13 +125,6 @@ watch(visible, (v) => {
   emit('update:modelValue', v)
   if (v) {
     nextTick(() => {
-      // if (props.initialData) {
-      //   const cloned = deepClone(props.initialData)
-      //   Object.keys(formData).forEach(key => delete formData[key])
-      //   Object.assign(formData, cloned)
-      // } else {
-      //   Object.keys(formData).forEach(key => delete formData[key])
-      // }
     })
   }
 })

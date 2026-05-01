@@ -3,34 +3,34 @@
   <description>用户管理模块，包含用户基本信息的表单与表格定义</description>
 
   <fields>
-    <field name="id" label="ID" type="number" primary="true" hidden="true">
+    <field name="id" label="ID" type="number" primary="true" visible="false">
       <validation required="false" />
     </field>
 
-    <field name="username" label="用户名" type="string" tableVisible="true" searchable="true">
+    <field name="username" label="用户名" type="string" searchable="true">
       <validation required="true" minLength="3" maxLength="20"
         pattern="^[a-zA-Z0-9_]+$"
         message="用户名只能包含字母、数字和下划线，长度3-20位" />
     </field>
 
-    <field name="nickname" label="昵称" type="string" tableVisible="true">
+    <field name="nickname" label="昵称" type="string">
       <validation required="false" maxLength="50" />
     </field>
 
-    <field name="email" label="邮箱" type="email" tableVisible="true" searchable="true">
+    <field name="email" label="邮箱" type="email" searchable="true">
       <validation required="true" format="email" message="请输入有效的邮箱地址" />
     </field>
 
-    <field name="phone" label="手机号" type="string" tableVisible="true">
+    <field name="phone" label="手机号" type="string">
       <validation required="false" pattern="^1[3-9]\d{9}$" message="请输入有效的手机号" />
     </field>
 
-    <field name="password" label="密码" type="password" tableVisible="false">
+    <field name="password" label="密码" type="password" visible="false">
       <validation required="true" minLength="8" maxLength="32"
         message="密码长度8-32位" />
     </field>
 
-    <field name="gender" label="性别" type="select" tableVisible="true">
+    <field name="gender" label="性别" type="select">
       <options>
         <option value="0" label="未知" />
         <option value="1" label="男" />
@@ -39,11 +39,11 @@
       <validation required="false" />
     </field>
 
-    <field name="birthday" label="生日" type="date" tableVisible="false">
+    <field name="birthday" label="生日" type="date" visible="false">
       <validation required="false" />
     </field>
 
-    <field name="status" label="状态" type="select" tableVisible="true">
+    <field name="status" label="状态" type="select">
       <options>
         <option value="0" label="禁用" />
         <option value="1" label="正常" />
@@ -51,15 +51,15 @@
       <validation required="true" default="1" />
     </field>
 
-    <field name="remark" label="备注" type="textarea" tableVisible="false">
+    <field name="remark" label="备注" type="textarea" visible="false">
       <validation required="false" maxLength="500" />
     </field>
 
-    <field name="createdAt" label="创建时间" type="datetime" tableVisible="true" readonly="true">
+    <field name="createdAt" label="创建时间" type="datetime" readonly="true">
       <validation required="false" />
     </field>
 
-    <field name="updatedAt" label="更新时间" type="datetime" tableVisible="true" readonly="true">
+    <field name="updatedAt" label="更新时间" type="datetime" readonly="true">
       <validation required="false" />
     </field>
   </fields>
@@ -90,6 +90,7 @@
       - modelName[]      → 数组形式（如 IUser[] / UserEntity[]）
       - 内联 <returns>   → 自定义返回结构
     -->
+
     <endpoint action="findAll" method="POST" path="/list" description="查询列表">
       <param name="query" type="ListQuery" required="true" />
       <!-- 返回类型：分页列表 -->

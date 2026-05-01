@@ -4,19 +4,7 @@
  * ⚠️ 此文件每次重新生成都会被覆盖
  */
 
-export interface FieldConfig {
-  name: string;
-  label: string;
-  type: string;
-  value: any;
-  default: any;
-  primary: boolean;
-  hidden: boolean;
-  tableVisible: boolean;
-  searchable: boolean;
-  readonly: boolean;
-  options?: { value: string | number; label: string }[];
-}
+import type { FieldConfig } from '@/models/common/types';
 
 export interface IProduct {
   /** ID */
@@ -52,8 +40,7 @@ export class ProductModel implements IProduct {
     value: 0,
     default: 0,
     primary: true,
-    hidden: true,
-    tableVisible: false,
+    visible: false,
     searchable: false,
     readonly: false,
   };
@@ -65,8 +52,7 @@ export class ProductModel implements IProduct {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: true,
     readonly: false,
   };
@@ -78,8 +64,7 @@ export class ProductModel implements IProduct {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: true,
     readonly: false, options: [{ value: '类别1', label: '类别1' }, { value: '类别2', label: '类别2' }, { value: '类别3', label: '类别3' }],
   };
@@ -91,8 +76,7 @@ export class ProductModel implements IProduct {
     value: 0,
     default: 0,
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: false,
   };
@@ -104,8 +88,7 @@ export class ProductModel implements IProduct {
     value: 0,
     default: 0,
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: false,
   };
@@ -117,8 +100,7 @@ export class ProductModel implements IProduct {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: true,
     readonly: false,
   };
@@ -130,8 +112,7 @@ export class ProductModel implements IProduct {
     value: [],
     default: [],
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: false,
     searchable: false,
     readonly: false,
   };
@@ -143,8 +124,7 @@ export class ProductModel implements IProduct {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: false,
     searchable: false,
     readonly: false,
   };
@@ -156,8 +136,7 @@ export class ProductModel implements IProduct {
     value: '0',
     default: '0',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: false, options: [{ value: 0, label: '下架' }, { value: 1, label: '上架' }],
   };
@@ -169,8 +148,7 @@ export class ProductModel implements IProduct {
     value: 0,
     default: 0,
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: false,
     searchable: false,
     readonly: false,
   };
@@ -182,8 +160,7 @@ export class ProductModel implements IProduct {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: true,
   };

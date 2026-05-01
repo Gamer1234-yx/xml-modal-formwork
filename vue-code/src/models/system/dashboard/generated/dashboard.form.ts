@@ -3,19 +3,7 @@
  * 自动生成 - 来源：dashboard.xml
  */
 
-import type { FormItemRule } from 'element-plus';
-
-export interface FormFieldConfig {
-  prop: string;
-  label: string;
-  component: string;
-  type?: string;
-  readonly?: boolean;
-  hidden?: boolean;
-  options?: { value: string | number; label: string }[];
-  remoteOptions?: { api: string; labelKey: string; valueKey: string };
-  componentProps?: Record<string, any>;
-}
+import type { FormFieldConfig, FormItemRule } from '@/models/common/types';
 
 export const dashboardFormFields: FormFieldConfig[] = [
   {

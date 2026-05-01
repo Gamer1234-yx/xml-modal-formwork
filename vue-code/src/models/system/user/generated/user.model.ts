@@ -4,19 +4,7 @@
  * ⚠️ 此文件每次重新生成都会被覆盖
  */
 
-export interface FieldConfig {
-  name: string;
-  label: string;
-  type: string;
-  value: any;
-  default: any;
-  primary: boolean;
-  hidden: boolean;
-  tableVisible: boolean;
-  searchable: boolean;
-  readonly: boolean;
-  options?: { value: string | number; label: string }[];
-}
+import type { FieldConfig } from '@/models/common/types';
 
 export interface IUser {
   /** ID */
@@ -54,8 +42,7 @@ export class UserModel implements IUser {
     value: 0,
     default: 0,
     primary: true,
-    hidden: true,
-    tableVisible: false,
+    visible: false,
     searchable: false,
     readonly: false,
   };
@@ -67,8 +54,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: true,
     readonly: false,
   };
@@ -80,8 +66,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: false,
   };
@@ -93,8 +78,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: true,
     readonly: false,
   };
@@ -106,8 +90,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: false,
   };
@@ -119,8 +102,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: false,
     searchable: false,
     readonly: false,
   };
@@ -132,8 +114,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: false, options: [{ value: 0, label: '未知' }, { value: 1, label: '男' }, { value: 2, label: '女' }],
   };
@@ -145,8 +126,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: false,
     searchable: false,
     readonly: false,
   };
@@ -158,8 +138,7 @@ export class UserModel implements IUser {
     value: '1',
     default: '1',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: false, options: [{ value: 0, label: '禁用' }, { value: 1, label: '正常' }],
   };
@@ -171,8 +150,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: false,
     searchable: false,
     readonly: false,
   };
@@ -184,8 +162,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: true,
   };
@@ -197,8 +174,7 @@ export class UserModel implements IUser {
     value: '',
     default: '',
     primary: false,
-    hidden: false,
-    tableVisible: true,
+    visible: true,
     searchable: false,
     readonly: true,
   };

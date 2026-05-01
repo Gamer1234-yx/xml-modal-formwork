@@ -4,19 +4,7 @@
  * ⚠️ 此文件每次重新生成都会被覆盖
  */
 
-export interface FieldConfig {
-  name: string;
-  label: string;
-  type: string;
-  value: any;
-  default: any;
-  primary: boolean;
-  hidden: boolean;
-  tableVisible: boolean;
-  searchable: boolean;
-  readonly: boolean;
-  options?: { value: string | number; label: string }[];
-}
+import type { FieldConfig } from '@/models/common/types';
 
 export interface IDashboard {
   /** 用户总数 */
@@ -38,8 +26,7 @@ export class DashboardModel implements IDashboard {
     value: 10,
     default: 10,
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: true,
     searchable: false,
     readonly: false,
   };
@@ -51,8 +38,7 @@ export class DashboardModel implements IDashboard {
     value: '0',
     default: '0',
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: true,
     searchable: false,
     readonly: false,
   };
@@ -64,8 +50,7 @@ export class DashboardModel implements IDashboard {
     value: '0',
     default: '0',
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: true,
     searchable: false,
     readonly: false,
   };
@@ -77,8 +62,7 @@ export class DashboardModel implements IDashboard {
     value: '0',
     default: '0',
     primary: false,
-    hidden: false,
-    tableVisible: false,
+    visible: true,
     searchable: false,
     readonly: false,
   };

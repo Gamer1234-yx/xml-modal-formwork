@@ -60,7 +60,7 @@
       style="width: 100%"
     >
       <el-table-column
-        v-for="col in columns"
+        v-for="col in visibleColumns"
         :key="col.prop"
         :prop="col.prop"
         :label="col.label"
@@ -115,21 +115,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { Search, Refresh, Plus, RefreshRight, Edit, Delete } from '@element-plus/icons-vue'
 import { formatDate, getLabel } from '@/utils'
 import { ApiResponse } from '@/utils/request'
+import { TableColumnConfig } from '@/models/common/types'
 
-interface Column {
-  prop: string
-  label: string
-  sortable?: boolean
-  width?: number | string
-  minWidth?: number | string
-  formatter?: string
-  tag?: boolean
-  options?: { value: string | number; label: string; type?: string }[]
-}
+// 计算可见列
+const visibleColumns = computed(() =>
+  props.columns.filter(col => col.visible !== false)
+)
 
 interface SearchField {
   prop: string
@@ -139,7 +134,7 @@ interface SearchField {
 }
 
 const props = defineProps<{
-  columns: Column[]
+  columns: TableColumnConfig[]
   searchFields?: SearchField[]
   apiFn: (params: Record<string, any>) => Promise<ApiResponse<{ list: any[]; total: number }>>
 }>()
