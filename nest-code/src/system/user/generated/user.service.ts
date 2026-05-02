@@ -7,7 +7,7 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { UserEntity } from './user.entity';
 // 导入可复用的参数类型和返回类型
 import type { ListQuery, UserFindAllReturn, UserRemoveReturn } from './user.types';
@@ -21,8 +21,18 @@ export class UserServiceBase {
 
   /** 查询列表 */
   async findAll(query: any): Promise<any> {
-    const { page = 1, pageSize = 20 } = query || {};
+    const { page = 1, pageSize = 20, ...where } = query || {};
+    const whereConditions: Record<string, any> = {};
+    Object.keys(where).forEach(key => {
+      const value = where[key];
+      if (typeof value === 'string') {
+        whereConditions[key] = Like(`%${value}%`);
+      } else {
+        whereConditions[key] = value;
+      }
+    });
     const [list, total] = await this.repo.findAndCount({
+      where: Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
       skip: (page - 1) * pageSize,
       take: pageSize,
       order: { id: 'DESC' },

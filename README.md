@@ -22,7 +22,7 @@ xml-modal-formwork/
 │   │   │   ├── VueCodeGenerator.js   # 生成 Vue3 前端代码
 │   │   │   └── NestCodeGenerator.js  # 生成 NestJS 后端代码
 │   │   ├── utils/
-│   │   │   ├── typeMapper.js         # 类型映射（XML→TS/Java/DB）
+│   │   │   ├── typeMapper.js         # 类型映射（XML→TS/DB）
 │   │   │   └── fileWriter.js         # 文件写入工具
 │   │   ├── index.js                  # 核心控制器
 │   │   └── cli.js                    # CLI 入口

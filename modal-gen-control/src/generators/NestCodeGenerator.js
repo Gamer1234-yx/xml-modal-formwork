@@ -290,7 +290,7 @@ class NestCodeGenerator {
     if (hasPrimary) {
       lines.push(`import { Injectable, NotFoundException } from '@nestjs/common';`);
       lines.push(`import { InjectRepository } from '@nestjs/typeorm';`);
-      lines.push(`import { Repository } from 'typeorm';`);
+      lines.push(`import { Repository, Like } from 'typeorm';`);
       lines.push(`import { ${className}Entity } from './${kebab}.entity';`);
     } else {
       lines.push(`import { Injectable } from '@nestjs/common';`);
@@ -312,8 +312,18 @@ class NestCodeGenerator {
     const findAllLines = [
       `  /** 查询列表 */`,
       `  async findAll(query: any): Promise<any> {`,
-      `    const { page = 1, pageSize = 20 } = query || {};`,
+      `    const { page = 1, pageSize = 20, ...where } = query || {};`,
+      `    const whereConditions: Record<string, any> = {};`,
+      `    Object.keys(where).forEach(key => {`,
+      `      const value = where[key];`,
+      `      if (typeof value === 'string') {`,
+      `        whereConditions[key] = Like(\`%\${value}%\`);`,
+      `      } else {`,
+      `        whereConditions[key] = value;`,
+      `      }`,
+      `    });`,
       `    const [list, total] = await this.repo.findAndCount({`,
+      `      where: Object.keys(whereConditions).length > 0 ? whereConditions : undefined,`,
       `      skip: (page - 1) * pageSize,`,
       `      take: pageSize,`,
       `      order: { id: 'DESC' },`,
