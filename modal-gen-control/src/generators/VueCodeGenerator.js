@@ -223,7 +223,15 @@ class VueCodeGenerator {
     lines.push(`export const ${schema.name}SearchFields = [`);
     for (const field of schema.fields) {
       if (!field.searchable) continue;
-      lines.push(`  { prop: '${field.name}', label: '${field.label}', component: '${getFormComponent(field.type)}' },`);
+      let searchFieldStr = `  { prop: '${field.name}', label: '${field.label}', component: '${getFormComponent(field.type)}'`;
+      if (field.options && field.options.length > 0) {
+        const opts = field.options.map(o =>
+          `{ value: '${o.value}', label: '${o.label}' }`
+        ).join(', ');
+        searchFieldStr += `, options: [${opts}]`;
+      }
+      searchFieldStr += ` },`;
+      lines.push(searchFieldStr);
     }
     lines.push(`];`);
     lines.push(``);

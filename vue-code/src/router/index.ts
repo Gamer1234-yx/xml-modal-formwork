@@ -20,6 +20,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '用户管理', icon: 'User' },
       },
       {
+        path: 'system/log',
+        name: 'SystemLog',
+        component: () => import('@/views/system/log/index.vue'),
+        meta: { title: '系统日志', icon: 'Files' },
+      },
+      {
         path: 'shop/product',
         name: 'ShopProduct',
         component: () => import('@/views/shop/product/index.vue'),

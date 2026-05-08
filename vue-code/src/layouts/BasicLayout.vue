@@ -28,6 +28,10 @@
               <el-icon><User /></el-icon>
               <template #title>用户管理</template>
             </el-menu-item>
+            <el-menu-item index="/system/log">
+              <el-icon><Files /></el-icon>
+              <template #title>系统日志</template>
+            </el-menu-item>
           </el-sub-menu>
           <el-sub-menu index="shop">
             <template #title>
@@ -90,6 +94,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { Files } from '@element-plus/icons-vue'
 
 const isCollapse = ref(false)
 const route = useRoute()

@@ -309,8 +309,16 @@ class NestCodeGenerator {
       lines.push(``);
     }
     
+    const hasUseActionList = ['create', 'update', 'remove', 'findOne', 'findAll'];
+    
+    const getEndpointDescription = (action) => {
+      const ep = schema.api.endpoints?.find(e => e.action === action);
+      return ep?.description || action;
+    };
+    
+    const findAllDesc = getEndpointDescription('findAll');
     const findAllLines = [
-      `  /** 查询列表 */`,
+      `  /** ${findAllDesc} */`,
       `  async findAll(query: any): Promise<any> {`,
       `    const { page = 1, pageSize = 20, ...where } = query || {};`,
       `    const whereConditions: Record<string, any> = {};`,
@@ -333,8 +341,9 @@ class NestCodeGenerator {
       ``,
     ];
     
+    const findOneDesc = getEndpointDescription('findOne');
     const findOneLines = [
-      `  /** 查询单条 */`,
+      `  /** ${findOneDesc} */`,
       `  async findOne(body: Partial<${className}Entity>): Promise<${className}Entity> {`,
       `    const record = await this.repo.findOne({ where: { id: body.id } });`,
       `    if (!record) throw new NotFoundException(\`${schema.label} id=\${body.id} 不存在\`);`,
@@ -343,8 +352,9 @@ class NestCodeGenerator {
       ``,
     ];
     
+    const createDesc = getEndpointDescription('create');
     const createLines = [
-      `  /** 新建 */`,
+      `  /** ${createDesc} */`,
       `  async create(body: Partial<${className}Entity>): Promise<${className}Entity> {`,
       `    const entity = this.repo.create(body);`,
       `    return this.repo.save(entity);`,
@@ -352,8 +362,9 @@ class NestCodeGenerator {
       ``,
     ];
     
+    const updateDesc = getEndpointDescription('update');
     const updateLines = [
-      `  /** 更新 */`,
+      `  /** ${updateDesc} */`,
       `  async update(body: Partial<${className}Entity>): Promise<${className}Entity> {`,
       `    await this.findOne(body);`,
       `    await this.repo.update(body.id, body);`,
@@ -362,8 +373,9 @@ class NestCodeGenerator {
       ``,
     ];
     
+    const removeDesc = getEndpointDescription('remove');
     const removeLines = [
-      `  /** 删除 */`,
+      `  /** ${removeDesc} */`,
       `  async remove(body: Partial<${className}Entity>): Promise<{ message: string }> {`,
       `    await this.findOne(body);`,
       `    await this.repo.delete(body.id);`,
@@ -371,7 +383,6 @@ class NestCodeGenerator {
       `  }`,
       ``,
     ];
-    const hasUseActionList = ['create', 'update', 'remove', 'findOne', 'findAll'];
 
     for (const ep of schema.api.endpoints) {
       const action = ep.action;

@@ -11,6 +11,10 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // 启用 WebSocket（原生 WebSocket）
+const { WsAdapter } = await import('@nestjs/platform-ws');
+app.useWebSocketAdapter(new WsAdapter(app));
+
   // 全局前缀
   app.setGlobalPrefix('api');
 
@@ -53,6 +57,7 @@ async function bootstrap() {
   await app.listen(port);
   
   let logMessage = `\n🚀 服务已启动: http://localhost:${port}`;
+  logMessage += `\n🔌 WebSocket:   ws://localhost:${port}`;
   if (process.env.SWAGGER_ENABLED === 'true') {
     logMessage += `\n📄 API文档:     http://localhost:${port}/${process.env.SWAGGER_PATH || 'api/docs'}`;
   }

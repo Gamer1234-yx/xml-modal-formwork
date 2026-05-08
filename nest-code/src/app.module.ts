@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SystemModule } from './system/system.module';
 import { ShopModule } from './shop/shop.module';
+import { WsModule } from './common/ws';
 
 @Module({
   imports: [
@@ -19,6 +20,9 @@ import { ShopModule } from './shop/shop.module';
       synchronize: process.env.NODE_ENV !== 'production', // 开发环境自动同步表结构
       logging: process.env.NODE_ENV === 'development',
     }),
+
+    // WebSocket 模块
+    WsModule,
 
     // 业务模块
     SystemModule,

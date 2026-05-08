@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modal name="Log" label="日志" module="system">
+  <description>系统日志模块，记录系统操作日志和异常信息</description>
+
+  <fields>
+    <field name="id" label="ID" type="number" primary="true" visible="false">
+      <validation required="false" />
+    </field>
+
+    <field name="level" label="日志级别" type="select" searchable="true">
+      <options>
+        <option value="debug" label="调试" />
+        <option value="info" label="信息" />
+        <option value="warn" label="警告" />
+        <option value="error" label="错误" />
+      </options>
+      <validation required="true" />
+    </field>
+
+    <field name="message" label="日志消息" type="textarea" searchable="true">
+      <validation required="true" maxLength="2000" />
+    </field>
+
+    <field name="module" label="所属模块" type="string" searchable="true">
+      <validation required="false" maxLength="100" />
+    </field>
+
+    <field name="action" label="操作类型" type="string" searchable="true">
+      <validation required="false" maxLength="100" />
+    </field>
+
+    <field name="operator" label="操作人" type="string" searchable="true">
+      <validation required="false" maxLength="50" />
+    </field>
+
+    <field name="ip" label="客户端IP" type="string" searchable="true">
+      <validation required="false" maxLength="50" />
+    </field>
+
+    <field name="requestId" label="请求ID" type="string" visible="false">
+      <validation required="false" maxLength="64" />
+    </field>
+
+    <field name="stackTrace" label="堆栈信息" type="textarea" visible="false">
+      <validation required="false" maxLength="5000" />
+    </field>
+
+    <field name="createdAt" label="创建时间" type="datetime" readonly="false">
+      <validation required="false" />
+    </field>
+  </fields>
+
+  <table pagination="true" pageSize="20" sortable="true" defaultSort="createdAt,desc" />
+
+  <api prefix="/api/system/log">
+    <type name="ListQuery">
+      <param name="page"     type="number"  default="1" />
+      <param name="pageSize" type="number"  default="20" />
+      <param name="level"    type="string" />
+      <param name="module"   type="string" />
+      <param name="operator" type="string" />
+      <param name="startTime" type="datetime" />
+      <param name="endTime"   type="datetime" />
+    </type>
+
+    <type name="idQuery">
+      <param name="id" type="number" required="true" />
+    </type>
+
+    <endpoint action="findAll" method="POST" path="/list" description="查询日志列表">
+      <param name="query" type="ListQuery" required="true" />
+      <returns>
+        <field name="list" type="modelName[]" />
+        <field name="total" type="number" />
+        <field name="page" type="number" />
+        <field name="pageSize" type="number" />
+      </returns>
+    </endpoint>
+
+    <endpoint action="findOne" method="POST" path="/detail" description="查询日志详情">
+      <param name="idQuery" type="idQuery" required="true" />
+      <returns type="modelName" />
+    </endpoint>
+
+    <endpoint action="create" method="POST" path="/create" description="添加日志">
+      <param name="body" type="modelName" required="true" />
+      <returns type="modelName" />
+    </endpoint>
+
+    <endpoint action="remove" method="POST" path="/delete" description="删除日志">
+      <param name="idQuery" type="idQuery" required="true" />
+      <returns>
+        <field name="message" type="string" />
+      </returns>
+    </endpoint>
+  </api>
+</modal>

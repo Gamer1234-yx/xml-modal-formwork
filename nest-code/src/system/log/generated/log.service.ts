@@ -1,25 +1,25 @@
 /**
- * 商品 Service（标准实现）
- * 自动生成 - 来源：product.xml
+ * 日志 Service（标准实现）
+ * 自动生成 - 来源：log.xml
  * ⚠️ 此文件每次重新生成都会被覆盖，请勿在此写业务逻辑
- *    自定义逻辑请写在上级目录的 product.service.ts 中
+ *    自定义逻辑请写在上级目录的 log.service.ts 中
  */
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
-import { ProductEntity } from './product.entity';
+import { LogEntity } from './log.entity';
 // 导入可复用的参数类型和返回类型
-import type { ListQuery, IdQuery, ProductFindAllReturn, ProductRemoveReturn } from './product.types';
+import type { ListQuery, IdQuery, LogFindAllReturn, LogRemoveReturn } from './log.types';
 
 @Injectable()
-export class ProductServiceBase {
+export class LogServiceBase {
   constructor(
-    @InjectRepository(ProductEntity)
-    protected readonly repo: Repository<ProductEntity>,
+    @InjectRepository(LogEntity)
+    protected readonly repo: Repository<LogEntity>,
   ) {}
 
-  /** 查询商品列表 */
+  /** 查询日志列表 */
   async findAll(query: any): Promise<any> {
     const { page = 1, pageSize = 20, ...where } = query || {};
     const whereConditions: Record<string, any> = {};
@@ -40,28 +40,21 @@ export class ProductServiceBase {
     return { list, total, page: +page, pageSize: +pageSize };
   }
 
-  /** 查询商品详情 */
-  async findOne(body: Partial<ProductEntity>): Promise<ProductEntity> {
+  /** 查询日志详情 */
+  async findOne(body: Partial<LogEntity>): Promise<LogEntity> {
     const record = await this.repo.findOne({ where: { id: body.id } });
-    if (!record) throw new NotFoundException(`商品 id=${body.id} 不存在`);
+    if (!record) throw new NotFoundException(`日志 id=${body.id} 不存在`);
     return record;
   }
 
-  /** 新建商品 */
-  async create(body: Partial<ProductEntity>): Promise<ProductEntity> {
+  /** 添加日志 */
+  async create(body: Partial<LogEntity>): Promise<LogEntity> {
     const entity = this.repo.create(body);
     return this.repo.save(entity);
   }
 
-  /** 更新商品 */
-  async update(body: Partial<ProductEntity>): Promise<ProductEntity> {
-    await this.findOne(body);
-    await this.repo.update(body.id, body);
-    return this.findOne(body);
-  }
-
-  /** 删除商品 */
-  async remove(body: Partial<ProductEntity>): Promise<{ message: string }> {
+  /** 删除日志 */
+  async remove(body: Partial<LogEntity>): Promise<{ message: string }> {
     await this.findOne(body);
     await this.repo.delete(body.id);
     return { message: '删除成功' };

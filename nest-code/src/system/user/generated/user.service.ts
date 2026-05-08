@@ -40,7 +40,7 @@ export class UserServiceBase {
     return { list, total, page: +page, pageSize: +pageSize };
   }
 
-  /** 查询单条 */
+  /** 查询详情 */
   async findOne(body: Partial<UserEntity>): Promise<UserEntity> {
     const record = await this.repo.findOne({ where: { id: body.id } });
     if (!record) throw new NotFoundException(`用户 id=${body.id} 不存在`);

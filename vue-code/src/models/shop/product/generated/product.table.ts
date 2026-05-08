@@ -83,7 +83,7 @@ export const ProductTableColumns: TableColumnConfig[] = [
 // 搜索字段
 export const ProductSearchFields = [
   { prop: 'name', label: '商品名称', component: 'ElInput' },
-  { prop: 'categoryId', label: '分类', component: 'ElSelect' },
+  { prop: 'categoryId', label: '分类', component: 'ElSelect', options: [{ value: '类别1', label: '类别1' }, { value: '类别2', label: '类别2' }, { value: '类别3', label: '类别3' }] },
   { prop: 'sku', label: 'SKU编码', component: 'ElInput' },
 ];
 

@@ -41,7 +41,7 @@
     <!-- 工具栏 -->
     <div class="table-toolbar">
       <slot name="toolbar">
-        <el-button type="primary" :icon="Plus" @click="$emit('create')">新建</el-button>
+        <el-button v-if="showCreate" type="primary" :icon="Plus" @click="$emit('create')">新建</el-button>
       </slot>
       <div class="toolbar-right">
         <el-tooltip content="刷新">
@@ -52,8 +52,8 @@
 
     <!-- 表格 -->
     <el-table
-      v-loading="loading"
-      :data="tableData"
+      v-loading="loading && !data"
+      :data="displayData"
       border
       stripe
       row-key="id"
@@ -91,7 +91,7 @@
       <!-- 操作列 -->
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link :icon="Edit" @click="$emit('edit', row)">编辑</el-button>
+          <el-button v-if="showEdit" type="primary" link :icon="Edit" @click="$emit('edit', row)">编辑</el-button>
           <el-popconfirm title="确定删除？" @confirm="$emit('delete', row)">
             <template #reference>
               <el-button type="danger" link :icon="Delete">删除</el-button>
@@ -102,7 +102,7 @@
     </el-table>
 
     <!-- 分页 -->
-    <div class="pagination-wrap">
+    <div v-if="!data" class="pagination-wrap">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
@@ -126,6 +126,11 @@ const visibleColumns = computed(() =>
   props.columns.filter(col => col.visible !== false)
 )
 
+// 显示数据：优先使用传入的 data，否则使用 apiFn 获取的数据
+const displayData = computed(() => {
+  return props.data || tableData.value
+})
+
 interface SearchField {
   prop: string
   label: string
@@ -133,16 +138,23 @@ interface SearchField {
   options?: { value: string | number; label: string }[]
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   columns: TableColumnConfig[]
   searchFields?: SearchField[]
-  apiFn: (params: Record<string, any>) => Promise<ApiResponse<{ list: any[]; total: number }>>
-}>()
+  apiFn?: (params: Record<string, any>) => Promise<ApiResponse<{ list: any[]; total: number }>>
+  showCreate?: boolean
+  showEdit?: boolean
+  data?: any[]
+}>(), {
+  showCreate: true,
+  showEdit: true,
+})
 
 const emit = defineEmits<{
   (e: 'create'): void
   (e: 'edit', row: any): void
   (e: 'delete', row: any): void
+  (e: 'query', params: { pageInfo: Record<string, any>; searchParams: Record<string, any> }): void
 }>()
 
 // 搜索表单
@@ -150,7 +162,12 @@ const searchForm = reactive<Record<string, any>>({})
 const loading = ref(false)
 const tableData = ref<any[]>([])
 const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+
 async function fetchData() {
+  if (props.data) return
+  
+  if (!props.apiFn) return
+  
   loading.value = true
   try {
     const res = await props.apiFn({
@@ -168,19 +185,41 @@ async function fetchData() {
 watch(
   () => [pagination.page, pagination.pageSize],
   () => {
+    emitQuery()
     fetchData()
   },
   { immediate: false }
 )
 
+watch(
+  () => props.data,
+  () => {
+    if (props.data) {
+      pagination.total = props.data.length
+    }
+  },
+  { immediate: true, deep: true }
+)
+
 function handleSearch() {
   pagination.page = 1
-  fetchData()
+  emitQuery()
+  if (!props.data) {
+    fetchData()
+  }
 }
 
 function handleReset() {
   Object.keys(searchForm).forEach((k) => delete searchForm[k])
   handleSearch()
+}
+
+function emitQuery() {
+  const params = {
+    pageInfo: { page: pagination.page, pageSize: pagination.pageSize, total: pagination.total },
+    searchParams: { ...searchForm }
+  }
+  emit('query', params)
 }
 
 function getTagType(options: any[], value: any) {
@@ -189,7 +228,7 @@ function getTagType(options: any[], value: any) {
 
 onMounted(fetchData)
 
-defineExpose({ fetchData })
+defineExpose({ fetchData, tableData })
 </script>
 
 <style lang="scss" scoped>
