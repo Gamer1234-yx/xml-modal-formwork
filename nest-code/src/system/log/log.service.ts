@@ -11,6 +11,9 @@ import type { ListQuery, IdQuery, LogFindAllReturn, LogRemoveReturn } from './ge
 
 @Injectable()
 export class LogService extends LogServiceBase implements OnModuleInit {
+  /** 保存上次订阅的参数 */
+  private lastParams: Record<string, any> = { page: 1, pageSize: 20 };
+
   constructor(
     @InjectRepository(LogEntity)
     protected readonly repo: Repository<LogEntity>,
@@ -21,7 +24,9 @@ export class LogService extends LogServiceBase implements OnModuleInit {
 
   onModuleInit() {
     this.wsService.registerDataFetcher('system/log', async (params) => {
-      const result = await super.findAll(params);
+      // 更新上次订阅的参数
+      this.lastParams = params || { page: 1, pageSize: 20 };
+      const result = await super.findAll(this.lastParams);
       return result;
     });
     console.log('[LogService] Registered WS data fetcher for system/log');
@@ -49,11 +54,10 @@ export class LogService extends LogServiceBase implements OnModuleInit {
   /** 查询并推送最新数据到 WS 订阅者 */
   private async pushData() {
     try {
-      // 使用上次订阅的参数，没有则使用默认值
-      const lastParams = this.wsService.getLastParams('system/log') || { page: 1, pageSize: 20 };
-      const result = await super.findAll(lastParams);
+      // 使用保存在本服务中的上次订阅参数
+      const result = await super.findAll(this.lastParams);
       this.wsService.publish('system/log', result);
-      console.log(`[LogService] Pushed data with params:`, lastParams);
+      console.log(`[LogService] Pushed data with params:`, this.lastParams);
     } catch (error) {
       console.error('[LogService] Error pushing data:', error);
     }

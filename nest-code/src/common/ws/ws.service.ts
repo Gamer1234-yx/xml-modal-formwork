@@ -9,7 +9,6 @@ interface Subscription {
 
 interface ModuleData {
   data: any[];
-  lastParams?: Record<string, any>;
 }
 
 type DataFetcher = (params?: Record<string, any>) => Promise<any>;
@@ -34,13 +33,15 @@ export class WsService {
     return Array.from(this.dataFetchers.keys());
   }
 
+  /** 检查指定模块是否有订阅者 */
+  hasSubscribers(module: string): boolean {
+    return this.subscriptions.some((s) => s.module === module);
+  }
+
   async subscribe(client: WebSocket, module: string, params?: Record<string, any>) {
     if (!this.moduleData[module]) {
       this.moduleData[module] = { data: [] };
     }
-
-    // 保存最后一次订阅的参数
-    this.moduleData[module].lastParams = params;
 
     const existing = this.subscriptions.find(
       (s) => s.client === client && s.module === module
@@ -60,12 +61,10 @@ export class WsService {
         console.log(`[WsService] Fetched result for ${module}:`, JSON.stringify(result));
         
         if (result && typeof result === 'object') {
-          // 存储完整结果
           this.moduleData[module].data = Array.isArray(result.list || result.data) 
             ? (result.list || result.data).slice(0, 20)
             : [result];
           
-          // 发送完整结果给前端
           const sendData = { module, ...result };
           console.log(`[WsService] Sending to client for ${module}:`, JSON.stringify(sendData));
           this.sendToClient(client, sendData);
@@ -78,27 +77,29 @@ export class WsService {
     }
   }
 
-  /** 获取指定模块最后一次订阅的参数 */
-  getLastParams(module: string): Record<string, any> | undefined {
-    return this.moduleData[module]?.lastParams;
-  }
-
   unsubscribe(client: WebSocket, module: string) {
     const index = this.subscriptions.findIndex(
       (s) => s.client === client && s.module === module
     );
     if (index !== -1) {
       this.subscriptions.splice(index, 1);
-      console.log(`[WsService] Client unsubscribed from ${module}`);
+      console.log(`[WsService] Client unsubscribed from ${module}, remaining subscribers: ${this.getSubscriberCount(module)}`);
     }
 
-    const hasOtherSubs = this.subscriptions.some((s) => s.client === client);
-    if (!hasOtherSubs) {
+    // 如果该模块没有其他订阅者，清理数据
+    if (!this.hasSubscribers(module)) {
       delete this.moduleData[module];
+      console.log(`[WsService] No more subscribers for ${module}, data cleaned`);
     }
   }
 
   publish(module: string, data: any) {
+    // 没有订阅者时不推送
+    if (!this.hasSubscribers(module)) {
+      console.log(`[WsService] No subscribers for ${module}, skipping publish`);
+      return;
+    }
+
     if (Array.isArray(data)) {
       this.moduleData[module].data = data.slice(0, 20);
     } else if (data?.list) {
@@ -133,9 +134,9 @@ export class WsService {
     });
 
     modulesToRemove.forEach((module) => {
-      const hasOtherSubs = this.subscriptions.some((s) => s.module === module);
-      if (!hasOtherSubs) {
+      if (!this.hasSubscribers(module)) {
         delete this.moduleData[module];
+        console.log(`[WsService] No more subscribers for ${module}, data cleaned`);
       }
     });
   }
