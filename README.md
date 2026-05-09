@@ -3,7 +3,7 @@
 > **XML驱动的全栈业务模型代码生成框架**
 > 一次定义，同时生成 Vue3 前端模型 + NestJS 后端模型 + WebSocket 实时通信
 
----
+***
 
 ## 目录结构
 
@@ -64,7 +64,7 @@ xml-modal-formwork/
             └── product.service.ts     # 用户自定义 Service（WS 集成）
 ```
 
----
+***
 
 ## 快速开始
 
@@ -165,9 +165,6 @@ npm run gen
 
 # 生成指定 XML
 node src/cli.js --file order.xml
-
-# 监听模式（修改XML自动重新生成）
-node src/cli.js --watch
 ```
 
 ### 4. 启动项目
@@ -179,10 +176,10 @@ npm run start:dev
 
 # 启动前端（Vue3）
 cd vue-code
-npm run dev
+npm run start
 ```
 
----
+***
 
 ## 核心功能：WebSocket 实时通信
 
@@ -250,11 +247,11 @@ onUnmounted(() => {
 
 #### 2. WebSocket Store API
 
-| 方法 | 说明 | 参数 |
-|------|------|------|
-| `watch()` | 订阅模块数据 | `{ module: string, params?: object }` |
-| `unwatch()` | 取消订阅 | `{ module: string }` |
-| `send()` | 发送消息 | `{ module: string, action: string, data?: any }` |
+| 方法          | 说明     | 参数                                               |
+| ----------- | ------ | ------------------------------------------------ |
+| `watch()`   | 订阅模块数据 | `{ module: string, params?: object }`            |
+| `unwatch()` | 取消订阅   | `{ module: string }`                             |
+| `send()`    | 发送消息   | `{ module: string, action: string, data?: any }` |
 
 #### 3. 数据结构
 
@@ -323,13 +320,13 @@ export class XxxService extends XxxServiceBase implements OnModuleInit {
 
 #### 2. WsEntityHelper 方法
 
-| 方法 | 说明 |
-|------|------|
-| `init(service, module)` | 初始化并注册数据获取器 |
-| `pushData()` | 推送最新数据到所有订阅者 |
+| 方法                      | 说明           |
+| ----------------------- | ------------ |
+| `init(service, module)` | 初始化并注册数据获取器  |
+| `pushData()`            | 推送最新数据到所有订阅者 |
 
 **特性**：
-- ✅ 自动保存上次订阅的参数（`lastParams`）
+
 - ✅ 数据变更后自动推送到所有订阅者
 - ✅ 支持多模块同时订阅
 - ✅ 取消订阅后停止推送
@@ -347,71 +344,71 @@ export class XxxService extends XxxServiceBase implements OnModuleInit {
 export class XxxModule {}
 ```
 
----
+***
 
 ## XML 字段定义参考
 
 ### `<modal>` 属性
 
-| 属性 | 说明 | 示例 |
-|------|------|------|
-| `name` | 模型名（PascalCase） | `User` |
-| `label` | 中文名 | `用户` |
-| `module` | 所属模块（影响生成路径） | `system` |
+| 属性       | 说明              | 示例       |
+| -------- | --------------- | -------- |
+| `name`   | 模型名（PascalCase） | `User`   |
+| `label`  | 中文名             | `用户`     |
+| `module` | 所属模块（影响生成路径）    | `system` |
 
 ### `<field>` 属性
 
-| 属性 | 说明 | 默认值 |
-|------|------|--------|
-| `name` | 字段名（camelCase） | 必填 |
-| `label` | 中文标签 | 必填 |
-| `type` | 字段类型（见下表） | `string` |
-| `primary` | 是否主键 | `false` |
-| `visible` | 是否显示（表单和表格） | `true` |
-| `searchable` | 是否作为搜索条件 | `false` |
-| `readonly` | 是否只读 | `false` |
-| `default` | 默认值 | - |
+| 属性           | 说明             | 默认值      |
+| ------------ | -------------- | -------- |
+| `name`       | 字段名（camelCase） | 必填       |
+| `label`      | 中文标签           | 必填       |
+| `type`       | 字段类型（见下表）      | `string` |
+| `primary`    | 是否主键           | `false`  |
+| `visible`    | 是否显示（表单和表格）    | `true`   |
+| `searchable` | 是否作为搜索条件       | `false`  |
+| `readonly`   | 是否只读           | `false`  |
+| `default`    | 默认值            | -        |
 
 ### 支持的字段类型
 
-| XML Type | TypeScript | Vue组件 | 数据库 |
-|----------|-----------|---------|--------|
-| `string` | `string` | `ElInput` | `VARCHAR(255)` |
-| `number` | `number` | `ElInputNumber` | `DECIMAL(18,4)` |
-| `integer` | `number` | `ElInputNumber` | `INT` |
-| `boolean` | `boolean` | `ElSwitch` | `TINYINT(1)` |
-| `email` | `string` | `ElInput` | `VARCHAR(255)` |
-| `password` | `string` | `ElInput(type=password)` | `VARCHAR(255)` |
-| `date` | `string` | `ElDatePicker` | `DATE` |
-| `datetime` | `string` | `ElDatePicker` | `DATETIME` |
-| `select` | `string\|number` | `ElSelect` | `VARCHAR(64)` |
-| `textarea` | `string` | `ElInput(textarea)` | `TEXT` |
-| `richtext` | `string` | `RichTextEditor` | `LONGTEXT` |
-| `image` | `string` | `ImageUpload` | `VARCHAR(512)` |
-| `image-list` | `string[]` | `ImageListUpload` | `JSON` |
+| XML Type     | TypeScript       | Vue组件                    | 数据库             |
+| ------------ | ---------------- | ------------------------ | --------------- |
+| `string`     | `string`         | `ElInput`                | `VARCHAR(255)`  |
+| `number`     | `number`         | `ElInputNumber`          | `DECIMAL(18,4)` |
+| `integer`    | `number`         | `ElInputNumber`          | `INT`           |
+| `boolean`    | `boolean`        | `ElSwitch`               | `TINYINT(1)`    |
+| `email`      | `string`         | `ElInput`                | `VARCHAR(255)`  |
+| `password`   | `string`         | `ElInput(type=password)` | `VARCHAR(255)`  |
+| `date`       | `string`         | `ElDatePicker`           | `DATE`          |
+| `datetime`   | `string`         | `ElDatePicker`           | `DATETIME`      |
+| `select`     | `string\|number` | `ElSelect`               | `VARCHAR(64)`   |
+| `textarea`   | `string`         | `ElInput(textarea)`      | `TEXT`          |
+| `richtext`   | `string`         | `RichTextEditor`         | `LONGTEXT`      |
+| `image`      | `string`         | `ImageUpload`            | `VARCHAR(512)`  |
+| `image-list` | `string[]`       | `ImageListUpload`        | `JSON`          |
 
 ### `<validation>` 属性
 
-| 属性 | 说明 | 适用类型 |
-|------|------|---------|
-| `required` | 是否必填 | 全部 |
-| `minLength` | 最小长度 | string |
-| `maxLength` | 最大长度 | string |
-| `min` | 最小值 | number |
-| `max` | 最大值 | number |
-| `pattern` | 正则表达式 | string |
-| `format` | 格式（如 `email`） | string |
-| `default` | 默认值 | 全部 |
-| `message` | 自定义错误提示 | 全部 |
+| 属性          | 说明            | 适用类型   |
+| ----------- | ------------- | ------ |
+| `required`  | 是否必填          | 全部     |
+| `minLength` | 最小长度          | string |
+| `maxLength` | 最大长度          | string |
+| `min`       | 最小值           | number |
+| `max`       | 最大值           | number |
+| `pattern`   | 正则表达式         | string |
+| `format`    | 格式（如 `email`） | string |
+| `default`   | 默认值           | 全部     |
+| `message`   | 自定义错误提示       | 全部     |
 
 ### `<condition>` 属性（条件显示）
 
-| 属性 | 说明 | 默认值 |
-|------|------|--------|
-| `name` | 依赖字段名 | 必填 |
-| `value` | 依赖字段的值 | 必填 |
+| 属性         | 说明                             | 默认值  |
+| ---------- | ------------------------------ | ---- |
+| `name`     | 依赖字段名                          | 必填   |
+| `value`    | 依赖字段的值                         | 必填   |
 | `operator` | 比较运算符：`eq`/`ne`/`gt`/`lt`/`in` | `eq` |
-| `logic` | 与下一个条件的连接：`and`/`or` | `or` |
+| `logic`    | 与下一个条件的连接：`and`/`or`           | `or` |
 
 **条件显示示例**：
 
@@ -425,71 +422,71 @@ export class XxxModule {}
 
 ### `<api>` 配置
 
-| 属性 | 说明 |
-|------|------|
+| 属性       | 说明       |
+| -------- | -------- |
 | `prefix` | API 前缀路径 |
 
 ### `<endpoint>` 属性
 
-| 属性 | 说明 |
-|------|------|
-| `action` | 方法名（camelCase） |
-| `method` | HTTP 方法：`GET`/`POST`/`PUT`/`DELETE` |
-| `path` | 接口路径 |
-| `description` | 接口描述 |
+| 属性            | 说明                                  |
+| ------------- | ----------------------------------- |
+| `action`      | 方法名（camelCase）                      |
+| `method`      | HTTP 方法：`GET`/`POST`/`PUT`/`DELETE` |
+| `path`        | 接口路径                                |
+| `description` | 接口描述                                |
 
----
+***
 
 ## 生成文件说明
 
 ### 前端（Vue3）
 
-| 文件 | 内容 | 更新策略 |
-|------|------|----------|
-| `generated/*.model.ts` | TypeScript Interface + Model Class | 每次覆盖 |
-| `generated/*.form.ts` | 表单字段配置 + 校验规则 | 每次覆盖 |
-| `generated/*.table.ts` | 表格列配置 + 搜索字段 | 每次覆盖 |
-| `generated/*.api.ts` | API Service 基类 | 每次覆盖 |
-| `*.api.ts` | 用户自定义 API（继承基类） | 仅首次创建 |
-| `index.ts` | 统一导出入口 | 每次覆盖 |
+| 文件                     | 内容                                 | 更新策略  |
+| ---------------------- | ---------------------------------- | ----- |
+| `generated/*.model.ts` | TypeScript Interface + Model Class | 每次覆盖  |
+| `generated/*.form.ts`  | 表单字段配置 + 校验规则                      | 每次覆盖  |
+| `generated/*.table.ts` | 表格列配置 + 搜索字段                       | 每次覆盖  |
+| `generated/*.api.ts`   | API Service 基类                     | 每次覆盖  |
+| `*.api.ts`             | 用户自定义 API（继承基类）                    | 仅首次创建 |
+| `index.ts`             | 统一导出入口                             | 每次覆盖  |
 
 #### 公共类型定义
 
 `models/common/types.ts`（自动生成）：
 
-| 接口 | 说明 |
-|------|------|
-| `FieldConfig` | 字段配置（name, label, type, value, default, visible, conditions...） |
-| `TableColumnConfig` | 表格列配置（prop, label, visible, sortable...） |
-| `FormFieldConfig` | 表单字段配置（prop, label, component, span...） |
-| `FormItemRule` | 表单校验规则 |
-| **`QueryParams`** | **CrudTable query 事件参数（pageInfo, searchParams）** |
+| 接口                  | 说明                                                              |
+| ------------------- | --------------------------------------------------------------- |
+| `FieldConfig`       | 字段配置（name, label, type, value, default, visible, conditions...） |
+| `TableColumnConfig` | 表格列配置（prop, label, visible, sortable...）                        |
+| `FormFieldConfig`   | 表单字段配置（prop, label, component, span...）                         |
+| `FormItemRule`      | 表单校验规则                                                          |
+| **`QueryParams`**   | **CrudTable query 事件参数（pageInfo, searchParams）**                |
 
 ### 后端（NestJS）
 
-| 文件 | 内容 | 更新策略 |
-|------|------|----------|
-| `generated/*.entity.ts` | TypeORM Entity | 每次覆盖 |
-| `generated/*.service.ts` | Service 基类 | 每次覆盖 |
-| `generated/*.controller.ts` | Controller 基类 | 每次覆盖 |
-| `generated/*.module.ts` | Module 基类 | 每次覆盖 |
-| `generated/dto/*.ts` | DTO 定义 | 每次覆盖 |
-| `*.service.ts` | 用户自定义 Service | 仅首次创建 |
-| `*.controller.ts` | 用户自定义 Controller | 仅首次创建 |
-| `*.module.ts` | 用户自定义 Module | 仅首次创建 |
+| 文件                          | 内容               | 更新策略  |
+| --------------------------- | ---------------- | ----- |
+| `generated/*.entity.ts`     | TypeORM Entity   | 每次覆盖  |
+| `generated/*.service.ts`    | Service 基类       | 每次覆盖  |
+| `generated/*.controller.ts` | Controller 基类    | 每次覆盖  |
+| `generated/*.module.ts`     | Module 基类        | 每次覆盖  |
+| `generated/dto/*.ts`        | DTO 定义           | 每次覆盖  |
+| `*.service.ts`              | 用户自定义 Service    | 仅首次创建 |
+| `*.controller.ts`           | 用户自定义 Controller | 仅首次创建 |
+| `*.module.ts`               | 用户自定义 Module     | 仅首次创建 |
 
 #### WebSocket 模块
 
 `common/ws/`（手动维护）：
 
-| 文件 | 说明 |
-|------|------|
-| `ws.module.ts` | WS 模块定义 |
-| `ws.service.ts` | WS 服务核心（订阅管理、消息分发） |
-| `ws.gateway.ts` | WS 网关（连接处理、消息路由） |
+| 文件                     | 说明                                    |
+| ---------------------- | ------------------------------------- |
+| `ws.module.ts`         | WS 模块定义                               |
+| `ws.service.ts`        | WS 服务核心（订阅管理、消息分发）                    |
+| `ws.gateway.ts`        | WS 网关（连接处理、消息路由）                      |
 | `ws-entity.service.ts` | **WsEntityHelper 辅助类**（简化 Service 集成） |
 
----
+***
 
 ## 工作流
 
@@ -552,7 +549,7 @@ XmlParser（解析为 ModalSchema 对象）
    推送到所有订阅者
 ```
 
----
+***
 
 ## 扩展说明
 
@@ -565,7 +562,7 @@ XmlParser（解析为 ModalSchema 对象）
   - 扩展 `WsEntityHelper` 添加更多便捷方法
   - 在 `WsGateway` 中添加新的事件监听
 
----
+***
 
 ## 注意事项
 
@@ -582,11 +579,12 @@ XmlParser（解析为 ModalSchema 对象）
    - 取消订阅后立即停止数据推送
    - 支持同一模块多个客户端独立订阅
 
----
+***
 
 ## 技术栈
 
 ### 前端
+
 - **Vue 3** + Composition API
 - **TypeScript** + Vite
 - **Pinia** 状态管理
@@ -594,12 +592,15 @@ XmlParser（解析为 ModalSchema 对象）
 - **原生 WebSocket** API
 
 ### 后端
+
 - **NestJS** 框架
 - **TypeORM** ORM
 - **@nestjs/platform-ws** WebSocket 支持
 - **依赖注入** + **模块化架构**
 
 ### 代码生成
+
 - **Node.js** + 自定义解析器
 - **XML** 模型定义
 - **模板引擎** 代码生成
+
