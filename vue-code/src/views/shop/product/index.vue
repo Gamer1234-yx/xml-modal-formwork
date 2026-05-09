@@ -4,10 +4,11 @@
       ref="tableRef"
       :columns="ProductTableColumns"
       :search-fields="ProductSearchFields"
-      :api-fn="fetchList"
+      :data="productData"
       @create="openDialog()"
       @edit="openDialog($event)"
       @delete="handleDelete"
+      @query="handleSearch"
     />
 
     <CrudDialog
@@ -25,22 +26,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import CrudTable from '@/components/CrudTable/index.vue'
 import CrudDialog from '@/components/CrudDialog/index.vue'
 import { ProductTableColumns, ProductSearchFields } from '@/models/shop/product/generated/product.table'
 import { ProductFormFields, ProductFormRules } from '@/models/shop/product/generated/product.form'
+import { useWsStore } from '@/stores'
 import productApi from '@/models/shop/product/product.api'
+import type { QueryParams } from '@/models/common/types'
 
 const tableRef = ref()
 const dialogVisible = ref(false)
 const dialogTitle = ref('新建商品')
 const editRow = ref<Record<string, any>>({})
+const wsStore = useWsStore()
 
-async function fetchList(params: Record<string, any>) {
-  return productApi.findAll(params)
-}
+const productData = computed(() => wsStore.moduleData['shop/product']?.list || [])
 
 function openDialog(row?: Record<string, any>) {
   editRow.value = row ? { ...row } : {}
@@ -57,12 +59,26 @@ async function handleSubmit(data: Record<string, any>) {
     ElMessage.success('创建成功')
   }
   dialogVisible.value = false
-  tableRef.value?.fetchData()
 }
 
 async function handleDelete(row: Record<string, any>) {
   await productApi.remove({id: row.id})
   ElMessage.success('删除成功')
-  tableRef.value?.fetchData()
 }
+
+function handleSearch(params: QueryParams) {
+  wsStore.watch({ module: 'shop/product', params: {
+    ...params.searchParams,
+    page: params.pageInfo.page,
+    pageSize: params.pageInfo.pageSize,
+  } })
+}
+
+onMounted(() => {
+  wsStore.watch({ module: 'shop/product', params: { page: 1, pageSize: 20 } })
+})
+
+onUnmounted(() => {
+  wsStore.unwatch({ module: 'shop/product' })
+})
 </script>

@@ -145,7 +145,6 @@ function handleClose() {
 }
 
 async function handleSubmit() {
-  console.log(deepClone(formData))
   if (!formRef.value) return
   await formRef.value.validate()
   submitting.value = true

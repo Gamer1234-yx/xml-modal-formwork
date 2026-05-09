@@ -39,6 +39,7 @@ import { LogTableColumns, LogSearchFields } from '@/models/system/log/generated/
 import { LogFormFields, LogFormRules } from '@/models/system/log/generated/log.form'
 import logApi from '@/models/system/log/log.api'
 import { useWsStore } from '@/stores'
+import type { QueryParams } from '@/models/common/types'
 
 const tableRef = ref()
 const dialogVisible = ref(false)
@@ -51,7 +52,7 @@ async function handleDelete(row: Record<string, any>) {
   ElMessage.success('删除成功')
 }
 
-function handleSearch(params) {
+function handleSearch(params: QueryParams) {
   console.log(params)
   wsStore.watch({ module: 'system/log', params: {
     ...params.searchParams,

@@ -119,7 +119,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { Search, Refresh, Plus, RefreshRight, Edit, Delete } from '@element-plus/icons-vue'
 import { formatDate, getLabel } from '@/utils'
 import { ApiResponse } from '@/utils/request'
-import { TableColumnConfig } from '@/models/common/types'
+import { QueryParams, TableColumnConfig } from '@/models/common/types'
 
 // 计算可见列
 const visibleColumns = computed(() =>
@@ -154,7 +154,7 @@ const emit = defineEmits<{
   (e: 'create'): void
   (e: 'edit', row: any): void
   (e: 'delete', row: any): void
-  (e: 'query', params: { pageInfo: Record<string, any>; searchParams: Record<string, any> }): void
+  (e: 'query', params: QueryParams): void
 }>()
 
 // 搜索表单

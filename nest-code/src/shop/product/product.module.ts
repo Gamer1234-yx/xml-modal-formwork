@@ -10,9 +10,13 @@
 
 import { Module } from '@nestjs/common';
 import { PRODUCT_MODULE_BASE_CONFIG, ProductModuleBase } from './generated/product.module';
+import { WsModule } from '../../common/ws';
 
 // 自定义：可在此处添加更多 imports / providers
-const config = { ...PRODUCT_MODULE_BASE_CONFIG };
+const config = {
+  ...PRODUCT_MODULE_BASE_CONFIG,
+  imports: [...(PRODUCT_MODULE_BASE_CONFIG.imports || []), WsModule],
+};
 
 @Module(config)
 export class ProductModule {}

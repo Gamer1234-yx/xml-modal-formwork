@@ -58,3 +58,13 @@ export interface FieldConfig {
   options?: { value: string | number; label: string }[];
   conditions?: { name: string; value: string; operator?: string; logic?: 'and' | 'or' }[];
 }
+
+// CrudTable query 事件参数类型
+export interface QueryParams {
+  pageInfo: {
+    page: number;
+    pageSize: number;
+    total: number;
+  };
+  searchParams: Record<string, any>;
+}
