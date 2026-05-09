@@ -16,9 +16,6 @@ import { WsService } from './ws.service';
  */
 @Injectable()
 export class WsEntityHelper {
-  /** 保存上次订阅的参数 */
-  lastParams: Record<string, any> = { page: 1, pageSize: 20 };
-  
   private wsModule!: string;
   private serviceInstance!: any;
 
@@ -34,21 +31,42 @@ export class WsEntityHelper {
     this.wsModule = module;
 
     this.wsService.registerDataFetcher(module, async (params) => {
-      this.lastParams = params || { page: 1, pageSize: 20 };
-      const result = await this.serviceInstance.findAll(this.lastParams);
+      const finalParams = params || { page: 1, pageSize: 20 };
+      const result = await this.serviceInstance.findAll(finalParams);
       return result;
     });
     console.log(`[WsEntityHelper] Registered WS data fetcher for ${module}`);
   }
 
-  /** 推送最新数据到 WS 订阅者 */
+  /**
+   * 推送最新数据到所有订阅者（按各自参数独立查询）
+   */
   async pushData() {
     try {
-      const result = await this.serviceInstance.findAll(this.lastParams);
-      this.wsService.publish(this.wsModule, result);
-      console.log(`[WsEntityHelper][${this.wsModule}] Pushed data with params:`, this.lastParams);
+      const subscribers = this.wsService.getSubscriptionsByModule(this.wsModule);
+      
+      if (!subscribers || subscribers.length === 0) return;
+
+      console.log(`[WsEntityHelper][${this.wsModule}] Pushing data to ${subscribers.length} subscriber(s)`);
+
+      // 为每个订阅者独立查询和推送
+      for (const sub of subscribers) {
+        if (sub.client.readyState !== 1) continue; // WebSocket.OPEN = 1
+        
+        try {
+          const params = sub.params || { page: 1, pageSize: 20 };
+          const result = await this.serviceInstance.findAll(params);
+          
+          const message = JSON.stringify({ module: this.wsModule, ...result });
+          sub.client.send(message);
+          
+          console.log(`[WsEntityHelper][${this.wsModule}] Pushed to subscriber with params:`, params);
+        } catch (error) {
+          console.error(`[WsEntityHelper][${this.wsModule}] Error pushing to subscriber:`, error);
+        }
+      }
     } catch (error) {
-      console.error(`[WsEntityHelper][${this.wsModule}] Error pushing data:`, error);
+      console.error(`[WsEntityHelper][${this.wsModule}] Error in pushData:`, error);
     }
   }
 }

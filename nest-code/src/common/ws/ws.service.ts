@@ -38,17 +38,27 @@ export class WsService {
     return this.subscriptions.some((s) => s.module === module);
   }
 
+  /** 获取指定模块的所有订阅（用于按订阅者独立推送） */
+  getSubscriptionsByModule(module: string): Subscription[] {
+    return this.subscriptions.filter((s) => s.module === module);
+  }
+
   async subscribe(client: WebSocket, module: string, params?: Record<string, any>) {
     if (!this.moduleData[module]) {
       this.moduleData[module] = { data: [] };
     }
 
-    const existing = this.subscriptions.find(
+    const existingIndex = this.subscriptions.findIndex(
       (s) => s.client === client && s.module === module
     );
-    if (!existing) {
+    
+    if (existingIndex !== -1) {
+      // 更新已有订阅的参数
+      this.subscriptions[existingIndex].params = params;
+      console.log(`[WsService] Updated subscription for ${module} with params:`, params);
+    } else {
       this.subscriptions.push({ client, module, params });
-      console.log(`[WsService] Client subscribed to ${module}, total subscribers for this module: ${this.getSubscriberCount(module)}`);
+      console.log(`[WsService] Client subscribed to ${module}, total subscribers: ${this.getSubscriberCount(module)}`);
     }
 
     const fetcher = this.dataFetchers.get(module);
@@ -86,7 +96,6 @@ export class WsService {
       console.log(`[WsService] Client unsubscribed from ${module}, remaining subscribers: ${this.getSubscriberCount(module)}`);
     }
 
-    // 如果该模块没有其他订阅者，清理数据
     if (!this.hasSubscribers(module)) {
       delete this.moduleData[module];
       console.log(`[WsService] No more subscribers for ${module}, data cleaned`);
@@ -94,7 +103,6 @@ export class WsService {
   }
 
   publish(module: string, data: any) {
-    // 没有订阅者时不推送
     if (!this.hasSubscribers(module)) {
       console.log(`[WsService] No subscribers for ${module}, skipping publish`);
       return;
