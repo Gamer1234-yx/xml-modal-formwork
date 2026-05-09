@@ -1,7 +1,7 @@
 # XML Modal Framework
 
 > **XML驱动的全栈业务模型代码生成框架**
-> 一次定义，同时生成 Vue3 前端模型 + NestJS 后端模型
+> 一次定义，同时生成 Vue3 前端模型 + NestJS 后端模型 + WebSocket 实时通信
 
 ---
 
@@ -30,33 +30,38 @@ xml-modal-formwork/
 │
 ├── vue-code/                # 🖥️ Vue3 前端项目（生成产物在 src/models/）
 │   └── src/
-│       └── models/
-│           ├── common/               # 公共类型定义（自动生成）
-│           │   └── types.ts          # FieldConfig, TableColumnConfig 等
-│           ├── system/user/          ← user.xml 生成
-│           │   ├── generated/        # 自动生成目录（每次覆盖）
-│           │   │   ├── user.model.ts
-│           │   │   ├── user.form.ts
-│           │   │   ├── user.table.ts
-│           │   │   └── user.api.ts
-│           │   ├── user.api.ts        # 用户自定义 API（仅首次创建）
-│           │   └── index.ts           # 统一导出
-│           └── shop/product/         ← product.xml 生成
+│       ├── models/
+│       │   ├── common/               # 公共类型定义（自动生成）
+│       │   │   └── types.ts          # FieldConfig, QueryParams 等
+│       │   ├── system/log/           ← log.xml 生成
+│       │   │   ├── generated/        # 自动生成目录（每次覆盖）
+│       │   │   └── log.api.ts        # 用户自定义 API
+│       │   └── shop/product/         ← product.xml 生成
+│       │       ├── generated/
+│       │       └── product.api.ts
+│       ├── stores/
+│       │   └── modules/
+│       │       └── websocket.ts      # WebSocket 状态管理
+│       ├── views/
+│       │   ├── system/log/           # 日志页面（WS 示例）
+│       │   └── shop/product/         # 商品页面（WS 示例）
+│       └── components/
+│           └── CrudTable/            # CRUD 表格组件
 │
 └── nest-code/               # 🔧 NestJS 后端项目（生成产物在 src/）
     └── src/
-        ├── system/user/              ← user.xml 生成
+        ├── common/
+        │   └── ws/                    # WebSocket 模块
+        │       ├── ws.module.ts
+        │       ├── ws.service.ts      # WS 服务核心
+        │       ├── ws.gateway.ts      # WS 网关
+        │       └── ws-entity.service.ts  # WS 辅助类
+        ├── system/log/                ← log.xml 生成
         │   ├── generated/
-        │   │   ├── user.entity.ts
-        │   │   ├── user.service.ts
-        │   │   ├── user.controller.ts
-        │   │   ├── user.module.ts
-        │   │   └── dto/
-        │   ├── user.service.ts       # 用户自定义 Service
-        │   ├── user.controller.ts    # 用户自定义 Controller
-        │   ├── user.module.ts        # 用户自定义 Module
-        │   └── index.ts
-        └── shop/product/             ← product.xml 生成
+        │   └── log.service.ts         # 用户自定义 Service（WS 集成）
+        └── shop/product/              ← product.xml 生成
+            ├── generated/
+            └── product.service.ts     # 用户自定义 Service（WS 集成）
 ```
 
 ---
@@ -67,6 +72,14 @@ xml-modal-formwork/
 
 ```bash
 cd modal-gen-control
+npm install
+
+# 前端依赖
+cd ../vue-code
+npm install
+
+# 后端依赖
+cd ../nest-code
 npm install
 ```
 
@@ -101,11 +114,6 @@ npm install
       <validation required="true" default="0" />
     </field>
 
-    <field name="images" label="商品图片" type="image-list" visible="false">
-      <condition name="status" value="1" operator="eq" logic="or" />
-      <condition name="status" value="2" operator="eq" />
-    </field>
-
     <field name="createdAt" label="创建时间" type="datetime" visible="true" readonly="true">
       <validation required="false" />
     </field>
@@ -127,11 +135,6 @@ npm install
         <field name="list" type="modelName[]" />
         <field name="total" type="number" />
       </returns>
-    </endpoint>
-
-    <endpoint action="findOne" method="POST" path="/detail" description="查询详情">
-      <param name="id" type="number" required="true" />
-      <returns type="modelName" />
     </endpoint>
 
     <endpoint action="create" method="POST" path="/create" description="新建">
@@ -165,6 +168,183 @@ node src/cli.js --file order.xml
 
 # 监听模式（修改XML自动重新生成）
 node src/cli.js --watch
+```
+
+### 4. 启动项目
+
+```bash
+# 启动后端（NestJS + WebSocket）
+cd nest-code
+npm run start:dev
+
+# 启动前端（Vue3）
+cd vue-code
+npm run dev
+```
+
+---
+
+## 核心功能：WebSocket 实时通信
+
+### 架构设计
+
+```
+前端 (Vue3)                    后端 (NestJS)
+┌─────────────┐               ┌─────────────────┐
+│ wsStore      │◀── WS ─────▶│ WsGateway       │
+│ (Pinia Store)│              │ (连接管理)       │
+│              │              │        │         │
+│ watch()      │              │        ▼         │
+│ unwatch()    │              │  WsService       │
+│              │              │ (订阅管理)       │
+│ moduleData[] │              │        │         │
+└─────────────┘              │        ▼         │
+                             │  Data Fetcher    │
+                             │  (LogService)    │
+                             │  (ProductService)│
+                             └─────────────────┘
+```
+
+### 前端使用
+
+#### 1. 在页面中订阅数据
+
+```vue
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted } from 'vue'
+import { useWsStore } from '@/stores'
+import type { QueryParams } from '@/models/common/types'
+
+const wsStore = useWsStore()
+
+// 从 WS 获取数据（响应式）
+const dataList = computed(() => wsStore.moduleData['module/name']?.list || [])
+
+// 处理查询事件（分页、搜索）
+function handleSearch(params: QueryParams) {
+  wsStore.watch({ 
+    module: 'module/name', 
+    params: {
+      ...params.searchParams,
+      page: params.pageInfo.page,
+      pageSize: params.pageInfo.pageSize,
+    }
+  })
+}
+
+// 页面加载时订阅
+onMounted(() => {
+  wsStore.watch({ module: 'module/name', params: { page: 1, pageSize: 20 } })
+})
+
+// 页面卸载时取消订阅
+onUnmounted(() => {
+  wsStore.unwatch({ module: 'module/name' })
+})
+</script>
+
+<template>
+  <CrudTable :data="dataList" @query="handleSearch" />
+</template>
+```
+
+#### 2. WebSocket Store API
+
+| 方法 | 说明 | 参数 |
+|------|------|------|
+| `watch()` | 订阅模块数据 | `{ module: string, params?: object }` |
+| `unwatch()` | 取消订阅 | `{ module: string }` |
+| `send()` | 发送消息 | `{ module: string, action: string, data?: any }` |
+
+#### 3. 数据结构
+
+```typescript
+wsStore.moduleData = {
+  'system/log': {
+    list: [...],           // 数据列表
+    pageInfo: {            // 分页信息
+      page: 1,
+      pageSize: 20,
+      total: 100
+    },
+    searchParams: {...}    // 搜索参数
+  },
+  'shop/product': {
+    list: [...],
+    pageInfo: {...},
+    searchParams: {...}
+  }
+}
+```
+
+### 后端使用
+
+#### 1. 在 Service 中集成 WebSocket
+
+```typescript
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { XxxServiceBase } from './generated/xxx.service';
+import { WsEntityHelper } from '../../common/ws/ws-entity.service';
+import { WsService } from '../../common/ws';
+
+@Injectable()
+export class XxxService extends XxxServiceBase implements OnModuleInit {
+  protected wsHelper: WsEntityHelper;
+
+  constructor(
+    @InjectRepository(XxxEntity)
+    protected readonly repo: Repository<XxxEntity>,
+    wsService: WsService,
+  ) {
+    super(repo);
+    this.wsHelper = new WsEntityHelper(wsService);  // 初始化 Helper
+  }
+
+  onModuleInit() {
+    // 注册 WS 数据获取器
+    this.wsHelper.init(this, 'module/name');
+  }
+
+  async create(body: Partial<CreateXxxDto>) {
+    const record = await super.create(body);
+    this.wsHelper.pushData();  // 创建后推送更新
+    return record;
+  }
+
+  async remove(body: Partial<IdQuery>) {
+    const result = await super.remove(body);
+    this.wsHelper.pushData();  // 删除后推送更新
+    return result;
+  }
+}
+```
+
+#### 2. WsEntityHelper 方法
+
+| 方法 | 说明 |
+|------|------|
+| `init(service, module)` | 初始化并注册数据获取器 |
+| `pushData()` | 推送最新数据到所有订阅者 |
+
+**特性**：
+- ✅ 自动保存上次订阅的参数（`lastParams`）
+- ✅ 数据变更后自动推送到所有订阅者
+- ✅ 支持多模块同时订阅
+- ✅ 取消订阅后停止推送
+
+#### 3. Module 配置
+
+在模块中导入 `WsModule`：
+
+```typescript
+@Module({
+  imports: [WsModule],  // 导入 WS 模块
+  providers: [XxxService],
+  controllers: [XxxController],
+})
+export class XxxModule {}
 ```
 
 ---
@@ -241,12 +421,6 @@ node src/cli.js --watch
   <condition name="status" value="1" operator="eq" logic="or" />
   <condition name="status" value="2" operator="eq" />
 </field>
-
-<!-- status=1 且 categoryId=类别1 时显示 -->
-<field name="detail" label="详情" type="richtext">
-  <condition name="status" value="1" operator="eq" logic="and" />
-  <condition name="categoryId" value="类别1" operator="eq" />
-</field>
 ```
 
 ### `<api>` 配置
@@ -263,29 +437,6 @@ node src/cli.js --watch
 | `method` | HTTP 方法：`GET`/`POST`/`PUT`/`DELETE` |
 | `path` | 接口路径 |
 | `description` | 接口描述 |
-
-### `<param>` 属性
-
-| 属性 | 说明 |
-|------|------|
-| `name` | 参数名 |
-| `type` | 参数类型（可以是自定义类型名） |
-| `required` | 是否必填 |
-| `default` | 默认值 |
-
-### `<returns>` 返回类型
-
-支持三种方式：
-
-1. 引用类型：`<returns type="IUser[]" />`
-2. 内联定义：
-   ```xml
-   <returns>
-     <field name="list" type="modelName[]" />
-     <field name="total" type="number" />
-   </returns>
-   ```
-3. 关键字：`modelName` → 当前模型类型，`modelName[]` → 数组形式
 
 ---
 
@@ -312,6 +463,7 @@ node src/cli.js --watch
 | `TableColumnConfig` | 表格列配置（prop, label, visible, sortable...） |
 | `FormFieldConfig` | 表单字段配置（prop, label, component, span...） |
 | `FormItemRule` | 表单校验规则 |
+| **`QueryParams`** | **CrudTable query 事件参数（pageInfo, searchParams）** |
 
 ### 后端（NestJS）
 
@@ -325,6 +477,17 @@ node src/cli.js --watch
 | `*.service.ts` | 用户自定义 Service | 仅首次创建 |
 | `*.controller.ts` | 用户自定义 Controller | 仅首次创建 |
 | `*.module.ts` | 用户自定义 Module | 仅首次创建 |
+
+#### WebSocket 模块
+
+`common/ws/`（手动维护）：
+
+| 文件 | 说明 |
+|------|------|
+| `ws.module.ts` | WS 模块定义 |
+| `ws.service.ts` | WS 服务核心（订阅管理、消息分发） |
+| `ws.gateway.ts` | WS 网关（连接处理、消息路由） |
+| `ws-entity.service.ts` | **WsEntityHelper 辅助类**（简化 Service 集成） |
 
 ---
 
@@ -354,6 +517,39 @@ XmlParser（解析为 ModalSchema 对象）
                                    *.service.ts（仅首次）
                                    *.controller.ts（仅首次）
                                    *.module.ts（仅首次）
+
+运行时工作流（WebSocket 实时通信）：
+   
+   前端页面加载
+       │
+       ▼
+   wsStore.watch({ module, params })  ← 订阅模块
+       │
+       ▼
+   WsGateway 接收订阅请求
+       │
+       ▼
+   WsService.registerDataFetcher()  ← 注册数据获取器
+       │
+       ▼
+   Service.findAll(params)  ← 查询数据
+       │
+       ▼
+   WsService.publish()  ← 推送到所有订阅者
+       │
+       ▼
+   前端 wsStore.moduleData 更新  ← UI 自动刷新
+   
+   数据变更（create/update/remove）
+       │
+       ▼
+   Service.wsHelper.pushData()  ← 触发推送
+       │
+       ▼
+   使用 lastParams 重新查询
+       │
+       ▼
+   推送到所有订阅者
 ```
 
 ---
@@ -364,6 +560,10 @@ XmlParser（解析为 ModalSchema 对象）
 - **修改代码模板**：分别编辑 `VueCodeGenerator.js` 或 `NestCodeGenerator.js` 中对应的 `gen*` 方法
 - **新增生成目标**：在 `modal-gen-control/src/index.js` 中扩展生成逻辑（如生成文档、SQL脚本等）
 - **自定义字段配置**：修改 `models/common/types.ts` 添加新字段，同步更新 `fileWriter.js` 模板
+- **扩展 WebSocket 功能**：
+  - 修改 `WsService` 添加新的消息类型处理
+  - 扩展 `WsEntityHelper` 添加更多便捷方法
+  - 在 `WsGateway` 中添加新的事件监听
 
 ---
 
@@ -373,3 +573,33 @@ XmlParser（解析为 ModalSchema 对象）
 2. **用户自定义代码**：`generated/` 目录外的文件仅首次创建，可安全添加自定义逻辑
 3. **条件显示**：`visible` 属性控制初始显示，`conditions` 数组控制动态显示逻辑
 4. **API 方法**：默认使用 `POST` 方法，在 `<endpoint>` 中指定 `method` 属性可修改
+5. **WebSocket 连接**：
+   - 前端自动连接 `ws://localhost:3000/ws`（可通过环境变量配置）
+   - 后端使用原生 WebSocket（非 Socket.IO）
+   - 页面卸载时务必调用 `unwatch()` 取消订阅
+6. **性能优化**：
+   - `lastParams` 机制避免重复查询
+   - 取消订阅后立即停止数据推送
+   - 支持同一模块多个客户端独立订阅
+
+---
+
+## 技术栈
+
+### 前端
+- **Vue 3** + Composition API
+- **TypeScript** + Vite
+- **Pinia** 状态管理
+- **Element Plus** UI 组件库
+- **原生 WebSocket** API
+
+### 后端
+- **NestJS** 框架
+- **TypeORM** ORM
+- **@nestjs/platform-ws** WebSocket 支持
+- **依赖注入** + **模块化架构**
+
+### 代码生成
+- **Node.js** + 自定义解析器
+- **XML** 模型定义
+- **模板引擎** 代码生成
